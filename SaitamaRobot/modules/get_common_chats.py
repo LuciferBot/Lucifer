@@ -7,9 +7,9 @@ from telegram.error import BadRequest, Unauthorized, RetryAfter
 from telegram.ext import CommandHandler, Filters
 from telegram.ext.dispatcher import run_async
 
-from SaitamaRobot import dispatcher, OWNER_ID
-from SaitamaRobot.modules.sql.users_sql import get_user_com_chats
-from SaitamaRobot.modules.helper_funcs.extraction import extract_user
+from lucifer import dispatcher, OWNER_ID
+from lucifer.modules.sql.users_sql import get_user_com_chats
+from lucifer.modules.helper_funcs.extraction import extract_user
 
 
 @run_async

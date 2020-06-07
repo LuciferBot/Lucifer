@@ -1,8 +1,8 @@
 from telegram.ext.dispatcher import run_async
-from SaitamaRobot.modules.helper_funcs.chat_status import dev_plus
+from lucifer.modules.helper_funcs.chat_status import dev_plus
 from telegram.ext import CommandHandler
 from telegram import Bot, Update, ParseMode
-from SaitamaRobot import dispatcher, LOGGER
+from lucifer import dispatcher, LOGGER
 import subprocess
 
 

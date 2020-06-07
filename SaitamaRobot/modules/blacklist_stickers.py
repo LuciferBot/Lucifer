@@ -9,19 +9,19 @@ from telegram.ext import CommandHandler, MessageHandler, Filters
 from telegram.ext.dispatcher import run_async
 from telegram.utils.helpers import mention_html, mention_markdown
 
-import SaitamaRobot.modules.sql.blsticker_sql as sql
-from SaitamaRobot import dispatcher, SUDO_USERS, LOGGER, OWNER_ID
-from SaitamaRobot.modules.disable import DisableAbleCommandHandler
-from SaitamaRobot.modules.helper_funcs.chat_status import can_delete, is_user_admin, user_not_admin, user_admin, \
+import lucifer.modules.sql.blsticker_sql as sql
+from lucifer import dispatcher, SUDO_USERS, LOGGER, OWNER_ID
+from lucifer.modules.disable import DisableAbleCommandHandler
+from lucifer.modules.helper_funcs.chat_status import can_delete, is_user_admin, user_not_admin, user_admin, \
 		bot_can_delete, is_bot_admin
-from SaitamaRobot.modules.helper_funcs.filters import CustomFilters
-from SaitamaRobot.modules.helper_funcs.misc import split_message
-from SaitamaRobot.modules.warns import warn
-from SaitamaRobot.modules.log_channel import loggable
-from SaitamaRobot.modules.sql import users_sql
-from SaitamaRobot.modules.connection import connected
+from lucifer.modules.helper_funcs.filters import CustomFilters
+from lucifer.modules.helper_funcs.misc import split_message
+from lucifer.modules.warns import warn
+from lucifer.modules.log_channel import loggable
+from lucifer.modules.sql import users_sql
+from lucifer.modules.connection import connected
 
-from SaitamaRobot.modules.helper_funcs.alternate import send_message
+from lucifer.modules.helper_funcs.alternate import send_message
 
 
 @run_async

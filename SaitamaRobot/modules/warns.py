@@ -9,16 +9,16 @@ from telegram.error import BadRequest
 from telegram.ext import CommandHandler, run_async, DispatcherHandlerStop, MessageHandler, Filters, CallbackQueryHandler
 from telegram.utils.helpers import mention_html
 
-from SaitamaRobot import dispatcher, BAN_STICKER, WHITELIST_USERS, TIGER_USERS
-from SaitamaRobot.modules.disable import DisableAbleCommandHandler
-from SaitamaRobot.modules.helper_funcs.chat_status import (is_user_admin, bot_admin, user_admin_no_reply, user_admin,
+from lucifer import dispatcher, BAN_STICKER, WHITELIST_USERS, TIGER_USERS
+from lucifer.modules.disable import DisableAbleCommandHandler
+from lucifer.modules.helper_funcs.chat_status import (is_user_admin, bot_admin, user_admin_no_reply, user_admin,
                                                      can_restrict)
-from SaitamaRobot.modules.helper_funcs.extraction import extract_text, extract_user_and_text, extract_user
-from SaitamaRobot.modules.helper_funcs.filters import CustomFilters
-from SaitamaRobot.modules.helper_funcs.misc import split_message
-from SaitamaRobot.modules.helper_funcs.string_handling import split_quotes
-from SaitamaRobot.modules.log_channel import loggable
-from SaitamaRobot.modules.sql import warns_sql as sql
+from lucifer.modules.helper_funcs.extraction import extract_text, extract_user_and_text, extract_user
+from lucifer.modules.helper_funcs.filters import CustomFilters
+from lucifer.modules.helper_funcs.misc import split_message
+from lucifer.modules.helper_funcs.string_handling import split_quotes
+from lucifer.modules.log_channel import loggable
+from lucifer.modules.sql import warns_sql as sql
 
 WARN_HANDLER_GROUP = 9
 CURRENT_WARNING_FILTER_STRING = "<b>Current warning filters in this chat:</b>\n"

@@ -5,9 +5,9 @@ from feedparser import parse
 from telegram import ParseMode, constants
 from telegram.ext import CommandHandler
 
-from SaitamaRobot import dispatcher, updater
-from SaitamaRobot.modules.helper_funcs.chat_status import user_admin
-from SaitamaRobot.modules.sql import rss_sql as sql
+from lucifer import dispatcher, updater
+from lucifer.modules.helper_funcs.chat_status import user_admin
+from lucifer.modules.sql import rss_sql as sql
 
 
 def show_url(bot, update, args):

@@ -7,12 +7,12 @@ from telegram.error import BadRequest
 from telegram.ext import CommandHandler, run_async
 from telegram.utils.helpers import mention_html
 
-from SaitamaRobot import dispatcher, LOGGER, TIGER_USERS
-from SaitamaRobot.modules.helper_funcs.chat_status import (bot_admin, user_admin, is_user_admin, can_restrict,
+from lucifer import dispatcher, LOGGER, TIGER_USERS
+from lucifer.modules.helper_funcs.chat_status import (bot_admin, user_admin, is_user_admin, can_restrict,
                                                      connection_status)
-from SaitamaRobot.modules.helper_funcs.extraction import extract_user, extract_user_and_text
-from SaitamaRobot.modules.helper_funcs.string_handling import extract_time
-from SaitamaRobot.modules.log_channel import loggable
+from lucifer.modules.helper_funcs.extraction import extract_user, extract_user_and_text
+from lucifer.modules.helper_funcs.string_handling import extract_time
+from lucifer.modules.log_channel import loggable
 
 
 def check_user(user_id: int, bot: Bot, chat: Chat) -> Optional[str]:

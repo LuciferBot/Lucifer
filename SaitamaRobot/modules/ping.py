@@ -5,8 +5,8 @@ import requests
 from telegram import Bot, Update, ParseMode
 from telegram.ext import run_async
 
-from SaitamaRobot import dispatcher, StartTime
-from SaitamaRobot.modules.disable import DisableAbleCommandHandler
+from lucifer import dispatcher, StartTime
+from lucifer.modules.disable import DisableAbleCommandHandler
 
 sites_list = {
     "Telegram": "https://api.telegram.org",

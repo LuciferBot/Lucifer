@@ -8,11 +8,11 @@ from telegram.error import BadRequest
 from telegram.ext import Filters, MessageHandler, CommandHandler, CallbackQueryHandler, run_async
 from telegram.utils.helpers import mention_html
 
-from SaitamaRobot import dispatcher, WHITELIST_USERS, TIGER_USERS
-from SaitamaRobot.modules.helper_funcs.chat_status import is_user_admin, user_admin, can_restrict, \
+from lucifer import dispatcher, WHITELIST_USERS, TIGER_USERS
+from lucifer.modules.helper_funcs.chat_status import is_user_admin, user_admin, can_restrict, \
 bot_admin, user_admin_no_reply, connection_status
-from SaitamaRobot.modules.log_channel import loggable
-from SaitamaRobot.modules.sql import antiflood_sql as sql
+from lucifer.modules.log_channel import loggable
+from lucifer.modules.sql import antiflood_sql as sql
 
 FLOOD_GROUP = 3
 

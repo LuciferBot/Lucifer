@@ -5,10 +5,10 @@ from telegram import Bot, Update, ParseMode, MAX_MESSAGE_LENGTH
 from telegram.ext.dispatcher import run_async
 from telegram.utils.helpers import escape_markdown
 
-import SaitamaRobot.modules.sql.userinfo_sql as sql
-from SaitamaRobot import dispatcher, SUDO_USERS, DEV_USERS
-from SaitamaRobot.modules.disable import DisableAbleCommandHandler
-from SaitamaRobot.modules.helper_funcs.extraction import extract_user
+import lucifer.modules.sql.userinfo_sql as sql
+from lucifer import dispatcher, SUDO_USERS, DEV_USERS
+from lucifer.modules.disable import DisableAbleCommandHandler
+from lucifer.modules.helper_funcs.extraction import extract_user
 
 
 @run_async

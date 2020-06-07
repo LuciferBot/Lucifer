@@ -2,7 +2,7 @@ import threading
 
 from sqlalchemy import Column, String
 
-from SaitamaRobot.modules.sql import BASE, SESSION
+from lucifer.modules.sql import BASE, SESSION
 
 
 class ChatbotChats(BASE):

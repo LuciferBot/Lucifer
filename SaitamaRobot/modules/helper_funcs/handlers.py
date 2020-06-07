@@ -1,8 +1,8 @@
 from telegram import Update
 from telegram.ext import CommandHandler, RegexHandler, MessageHandler
 
-import SaitamaRobot.modules.sql.blacklistusers_sql as sql
-from SaitamaRobot import ALLOW_EXCL
+import lucifer.modules.sql.blacklistusers_sql as sql
+from lucifer import ALLOW_EXCL
 
 if ALLOW_EXCL:
     CMD_STARTERS = ('/', '!')

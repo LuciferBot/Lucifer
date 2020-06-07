@@ -7,11 +7,11 @@ from telegram.error import BadRequest
 from telegram.ext import CommandHandler, Filters, run_async
 from telegram.utils.helpers import mention_html
 
-from SaitamaRobot import dispatcher, TOKEN, SUDO_USERS
-from SaitamaRobot.modules.disable import DisableAbleCommandHandler
-from SaitamaRobot.modules.helper_funcs.chat_status import bot_admin, can_promote, user_admin, can_pin, connection_status
-from SaitamaRobot.modules.helper_funcs.extraction import extract_user, extract_user_and_text
-from SaitamaRobot.modules.log_channel import loggable
+from lucifer import dispatcher, TOKEN, SUDO_USERS
+from lucifer.modules.disable import DisableAbleCommandHandler
+from lucifer.modules.helper_funcs.chat_status import bot_admin, can_promote, user_admin, can_pin, connection_status
+from lucifer.modules.helper_funcs.extraction import extract_user, extract_user_and_text
+from lucifer.modules.log_channel import loggable
 
 
 @run_async

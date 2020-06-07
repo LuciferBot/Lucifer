@@ -3,8 +3,8 @@ from googletrans import Translator, LANGUAGES
 from telegram import Bot, Update, ParseMode
 from telegram.ext import run_async
 
-from SaitamaRobot import dispatcher
-from SaitamaRobot.modules.disable import DisableAbleCommandHandler
+from lucifer import dispatcher
+from lucifer.modules.disable import DisableAbleCommandHandler
 
 
 @run_async

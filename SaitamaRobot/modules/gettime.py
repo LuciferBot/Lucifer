@@ -5,8 +5,8 @@ import requests
 from telegram import Bot, Update, ParseMode
 from telegram.ext import run_async
 
-from SaitamaRobot import dispatcher, TIME_API_KEY
-from SaitamaRobot.modules.disable import DisableAbleCommandHandler
+from lucifer import dispatcher, TIME_API_KEY
+from lucifer.modules.disable import DisableAbleCommandHandler
 
 
 def generate_time(to_find: str, findtype: List[str]) -> str:

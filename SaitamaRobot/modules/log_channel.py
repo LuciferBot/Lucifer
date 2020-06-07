@@ -1,7 +1,7 @@
 from datetime import datetime
 from functools import wraps
 
-from SaitamaRobot.modules.helper_funcs.misc import is_module_loaded
+from lucifer.modules.helper_funcs.misc import is_module_loaded
 
 FILENAME = __name__.rsplit(".", 1)[-1]
 
@@ -11,9 +11,9 @@ if is_module_loaded(FILENAME):
     from telegram.ext import CommandHandler, run_async, JobQueue
     from telegram.utils.helpers import escape_markdown
 
-    from SaitamaRobot import dispatcher, LOGGER, GBAN_LOGS
-    from SaitamaRobot.modules.helper_funcs.chat_status import user_admin
-    from SaitamaRobot.modules.sql import log_channel_sql as sql
+    from lucifer import dispatcher, LOGGER, GBAN_LOGS
+    from lucifer.modules.helper_funcs.chat_status import user_admin
+    from lucifer.modules.sql import log_channel_sql as sql
 
 
     def loggable(func):

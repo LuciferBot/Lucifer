@@ -6,11 +6,11 @@ from telegram.error import BadRequest
 from telegram.ext import CommandHandler, run_async
 from telegram.utils.helpers import mention_html
 
-import SaitamaRobot.modules.sql.blacklistusers_sql as sql
-from SaitamaRobot import dispatcher, OWNER_ID, DEV_USERS, SUDO_USERS, WHITELIST_USERS, SUPPORT_USERS
-from SaitamaRobot.modules.helper_funcs.chat_status import dev_plus
-from SaitamaRobot.modules.helper_funcs.extraction import extract_user_and_text, extract_user
-from SaitamaRobot.modules.log_channel import gloggable
+import lucifer.modules.sql.blacklistusers_sql as sql
+from lucifer import dispatcher, OWNER_ID, DEV_USERS, SUDO_USERS, WHITELIST_USERS, SUPPORT_USERS
+from lucifer.modules.helper_funcs.chat_status import dev_plus
+from lucifer.modules.helper_funcs.extraction import extract_user_and_text, extract_user
+from lucifer.modules.log_channel import gloggable
 
 BLACKLISTWHITELIST = [OWNER_ID] + DEV_USERS + SUDO_USERS + WHITELIST_USERS + SUPPORT_USERS
 BLABLEUSERS = [OWNER_ID] + DEV_USERS

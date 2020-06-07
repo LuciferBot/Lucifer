@@ -6,10 +6,10 @@ from telegram.error import BadRequest, Unauthorized
 from telegram.ext import CommandHandler, RegexHandler, run_async, Filters, CallbackQueryHandler
 from telegram.utils.helpers import mention_html
 
-from SaitamaRobot.modules.helper_funcs.chat_status import user_not_admin, user_admin
-from SaitamaRobot.modules.log_channel import loggable
-from SaitamaRobot.modules.sql import reporting_sql as sql
-from SaitamaRobot import dispatcher, LOGGER, SUDO_USERS, TIGER_USERS, WHITELIST_USERS
+from lucifer.modules.helper_funcs.chat_status import user_not_admin, user_admin
+from lucifer.modules.log_channel import loggable
+from lucifer.modules.sql import reporting_sql as sql
+from lucifer import dispatcher, LOGGER, SUDO_USERS, TIGER_USERS, WHITELIST_USERS
 
 REPORT_GROUP = 12
 REPORT_IMMUNE_USERS = SUDO_USERS + TIGER_USERS + WHITELIST_USERS

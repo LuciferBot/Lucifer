@@ -8,16 +8,16 @@ from telegram.error import BadRequest
 from telegram.ext import CommandHandler, MessageHandler, DispatcherHandlerStop, run_async
 from telegram.utils.helpers import escape_markdown
 
-from SaitamaRobot import dispatcher, LOGGER, SUPPORT_CHAT
-from SaitamaRobot.modules.blacklist import infinite_loop_check
-from SaitamaRobot.modules.disable import DisableAbleCommandHandler
-from SaitamaRobot.modules.helper_funcs.chat_status import user_admin, connection_status
-from SaitamaRobot.modules.helper_funcs.extraction import extract_text
-from SaitamaRobot.modules.helper_funcs.filters import CustomFilters
-from SaitamaRobot.modules.helper_funcs.regex_helper import infinite_loop_check, regex_searcher
-from SaitamaRobot.modules.helper_funcs.misc import build_keyboard
-from SaitamaRobot.modules.helper_funcs.string_handling import split_quotes, button_markdown_parser
-from SaitamaRobot.modules.sql import cust_filters_sql as sql
+from lucifer import dispatcher, LOGGER, SUPPORT_CHAT
+from lucifer.modules.blacklist import infinite_loop_check
+from lucifer.modules.disable import DisableAbleCommandHandler
+from lucifer.modules.helper_funcs.chat_status import user_admin, connection_status
+from lucifer.modules.helper_funcs.extraction import extract_text
+from lucifer.modules.helper_funcs.filters import CustomFilters
+from lucifer.modules.helper_funcs.regex_helper import infinite_loop_check, regex_searcher
+from lucifer.modules.helper_funcs.misc import build_keyboard
+from lucifer.modules.helper_funcs.string_handling import split_quotes, button_markdown_parser
+from lucifer.modules.sql import cust_filters_sql as sql
 
 HANDLER_GROUP = 10
 

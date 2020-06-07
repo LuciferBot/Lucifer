@@ -3,8 +3,8 @@ import threading
 
 from sqlalchemy import Column, String, Boolean, UnicodeText, Integer, func, distinct
 
-from SaitamaRobot.modules.helper_funcs.msg_types import Types
-from SaitamaRobot.modules.sql import SESSION, BASE
+from lucifer.modules.helper_funcs.msg_types import Types
+from lucifer.modules.sql import SESSION, BASE
 
 
 class Notes(BASE):

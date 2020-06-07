@@ -4,11 +4,11 @@ from time import sleep
 from telegram import Bot, Update, TelegramError
 from telegram.error import BadRequest
 from telegram.ext import CommandHandler, MessageHandler, Filters, run_async
-from SaitamaRobot.modules.sql.users_sql import get_all_users
-import SaitamaRobot.modules.sql.users_sql as sql
+from lucifer.modules.sql.users_sql import get_all_users
+import lucifer.modules.sql.users_sql as sql
 
-from SaitamaRobot import dispatcher, OWNER_ID, LOGGER, DEV_USERS
-from SaitamaRobot.modules.helper_funcs.chat_status import sudo_plus, dev_plus
+from lucifer import dispatcher, OWNER_ID, LOGGER, DEV_USERS
+from lucifer.modules.helper_funcs.chat_status import sudo_plus, dev_plus
 
 USERS_GROUP = 4
 CHAT_GROUP = 5

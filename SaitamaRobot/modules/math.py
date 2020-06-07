@@ -2,8 +2,8 @@ from typing import List
 import requests
 from telegram import Message, Update, Bot, MessageEntity
 from telegram.ext import CommandHandler, run_async
-from SaitamaRobot import dispatcher
-from SaitamaRobot.modules.disable import DisableAbleCommandHandler
+from lucifer import dispatcher
+from lucifer.modules.disable import DisableAbleCommandHandler
 import pynewtonmath as newton
 import math
 

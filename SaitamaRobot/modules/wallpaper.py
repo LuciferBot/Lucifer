@@ -7,8 +7,8 @@ from time import sleep
 from telegram import Message, Chat, Update, Bot
 from telegram.ext import run_async
 
-from SaitamaRobot import dispatcher, WALL_API, SUPPORT_CHAT
-from SaitamaRobot.modules.disable import DisableAbleCommandHandler
+from lucifer import dispatcher, WALL_API, SUPPORT_CHAT
+from lucifer.modules.disable import DisableAbleCommandHandler
 
 
 @run_async

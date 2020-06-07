@@ -20,8 +20,8 @@ from contextlib import redirect_stdout
 from telegram import ParseMode
 from telegram.ext import CommandHandler, run_async
 
-from SaitamaRobot import dispatcher, LOGGER
-from SaitamaRobot.modules.helper_funcs.chat_status import dev_plus
+from lucifer import dispatcher, LOGGER
+from lucifer.modules.helper_funcs.chat_status import dev_plus
 
 namespaces = {}
 
@@ -76,7 +76,7 @@ def do(func, bot, update):
     env = namespace_of(update.message.chat_id, update, bot)
 
     os.chdir(os.getcwd())
-    with open(os.path.join(os.getcwd(), 'SaitamaRobot/modules/helper_funcs/temp.txt'), 'w') as temp:
+    with open(os.path.join(os.getcwd(), 'lucifer/modules/helper_funcs/temp.txt'), 'w') as temp:
         temp.write(body)
 
     stdout = io.StringIO()

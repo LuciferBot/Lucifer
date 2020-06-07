@@ -4,10 +4,10 @@ from telegram import Bot, Update, InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.error import BadRequest, Unauthorized
 from telegram.ext import CommandHandler, CallbackQueryHandler, run_async
 
-import SaitamaRobot.modules.sql.global_bans_sql as gban_sql
-import SaitamaRobot.modules.sql.users_sql as user_sql
-from SaitamaRobot import dispatcher, OWNER_ID, DEV_USERS
-from SaitamaRobot.modules.helper_funcs.chat_status import dev_plus
+import lucifer.modules.sql.global_bans_sql as gban_sql
+import lucifer.modules.sql.users_sql as user_sql
+from lucifer import dispatcher, OWNER_ID, DEV_USERS
+from lucifer.modules.helper_funcs.chat_status import dev_plus
 
 
 def get_invalid_chats(bot: Bot, update: Update, remove: bool = False):

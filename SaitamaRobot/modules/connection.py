@@ -6,10 +6,10 @@ from telegram import Bot, Update, ParseMode, InlineKeyboardMarkup, InlineKeyboar
 from telegram.error import BadRequest, Unauthorized
 from telegram.ext import CommandHandler, CallbackQueryHandler, run_async
 
-import SaitamaRobot.modules.sql.connection_sql as sql
-from SaitamaRobot import dispatcher, SUDO_USERS, DEV_USERS
-from SaitamaRobot.modules.helper_funcs import chat_status
-from SaitamaRobot.modules.helper_funcs.alternate import send_message
+import lucifer.modules.sql.connection_sql as sql
+from lucifer import dispatcher, SUDO_USERS, DEV_USERS
+from lucifer.modules.helper_funcs import chat_status
+from lucifer.modules.helper_funcs.alternate import send_message
 
 user_admin = chat_status.user_admin
 

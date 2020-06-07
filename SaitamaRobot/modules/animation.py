@@ -1,9 +1,9 @@
 import time
 from telegram import Bot, Update, ParseMode
 from telegram.ext import run_async
-from SaitamaRobot import dispatcher
-from SaitamaRobot.modules.disable import DisableAbleCommandHandler
-from SaitamaRobot.modules.helper_funcs.chat_status import user_admin
+from lucifer import dispatcher
+from lucifer.modules.disable import DisableAbleCommandHandler
+from lucifer.modules.helper_funcs.chat_status import user_admin
 
 #sleep how many times after each edit in 'police' 
 EDIT_SLEEP = 2

@@ -7,12 +7,12 @@ from telegram import Bot, Update, ParseMode, TelegramError
 from telegram.ext import CommandHandler, run_async
 from telegram.utils.helpers import mention_html
 
-from SaitamaRobot import dispatcher, WHITELIST_USERS, TIGER_USERS, SUPPORT_USERS, SUDO_USERS, DEV_USERS, OWNER_ID, SUPPORT_CHAT
-from SaitamaRobot.modules.helper_funcs.chat_status import whitelist_plus, dev_plus, sudo_plus
-from SaitamaRobot.modules.helper_funcs.extraction import extract_user
-from SaitamaRobot.modules.log_channel import gloggable
+from lucifer import dispatcher, WHITELIST_USERS, TIGER_USERS, SUPPORT_USERS, SUDO_USERS, DEV_USERS, OWNER_ID, SUPPORT_CHAT
+from lucifer.modules.helper_funcs.chat_status import whitelist_plus, dev_plus, sudo_plus
+from lucifer.modules.helper_funcs.extraction import extract_user
+from lucifer.modules.log_channel import gloggable
 
-ELEVATED_USERS_FILE = os.path.join(os.getcwd(), 'SaitamaRobot/elevated_users.json')
+ELEVATED_USERS_FILE = os.path.join(os.getcwd(), 'lucifer/elevated_users.json')
 
 
 def check_user_id(user_id: int, bot: Bot) -> Optional[str]:

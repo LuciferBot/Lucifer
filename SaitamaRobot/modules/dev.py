@@ -7,8 +7,8 @@ from typing import List
 from telegram import Bot, Update, TelegramError
 from telegram.ext import CommandHandler, run_async
 
-from SaitamaRobot import dispatcher
-from SaitamaRobot.modules.helper_funcs.chat_status import dev_plus
+from lucifer import dispatcher
+from lucifer.modules.helper_funcs.chat_status import dev_plus
 
 
 @run_async

@@ -6,11 +6,11 @@ from typing import List
 from telegram import Bot, Update, ParseMode
 from telegram.ext import run_async
 
-import SaitamaRobot.modules.fun_strings as fun_strings
-from SaitamaRobot import dispatcher
-from SaitamaRobot.modules.disable import DisableAbleCommandHandler
-from SaitamaRobot.modules.helper_funcs.chat_status import is_user_admin, user_admin
-from SaitamaRobot.modules.helper_funcs.extraction import extract_user
+import lucifer.modules.fun_strings as fun_strings
+from lucifer import dispatcher
+from lucifer.modules.disable import DisableAbleCommandHandler
+from lucifer.modules.helper_funcs.chat_status import is_user_admin, user_admin
+from lucifer.modules.helper_funcs.extraction import extract_user
 
 @run_async
 def runs(bot: Bot, update: Update):

@@ -1,11 +1,11 @@
 import sre_constants
-from SaitamaRobot.modules.helper_funcs.regex_helper import infinite_loop_check, regex_searcher
+from lucifer.modules.helper_funcs.regex_helper import infinite_loop_check, regex_searcher
 from telegram import Update, Bot
 from telegram.ext import run_async
 import telegram
 import regex
-from SaitamaRobot import dispatcher, LOGGER
-from SaitamaRobot.modules.disable import DisableAbleRegexHandler
+from lucifer import dispatcher, LOGGER
+from lucifer.modules.disable import DisableAbleRegexHandler
 
 DELIMITERS = ("/", ":", "|", "_")
 

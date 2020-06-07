@@ -3,7 +3,7 @@ from typing import Union
 
 from sqlalchemy import Column, Integer, String, Boolean
 
-from SaitamaRobot.modules.sql import SESSION, BASE
+from lucifer.modules.sql import SESSION, BASE
 
 
 class ReportingUserSettings(BASE):

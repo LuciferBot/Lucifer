@@ -5,13 +5,13 @@ from typing import List
 from telegram import Bot, Update, ParseMode
 from telegram.error import BadRequest
 from telegram.ext import CommandHandler, MessageHandler, Filters, run_async
-from SaitamaRobot.modules.helper_funcs.regex_helper import infinite_loop_check, regex_searcher
-import SaitamaRobot.modules.sql.blacklist_sql as sql
-from SaitamaRobot import dispatcher, LOGGER
-from SaitamaRobot.modules.disable import DisableAbleCommandHandler
-from SaitamaRobot.modules.helper_funcs.chat_status import user_admin, user_not_admin, connection_status
-from SaitamaRobot.modules.helper_funcs.extraction import extract_text
-from SaitamaRobot.modules.helper_funcs.misc import split_message
+from lucifer.modules.helper_funcs.regex_helper import infinite_loop_check, regex_searcher
+import lucifer.modules.sql.blacklist_sql as sql
+from lucifer import dispatcher, LOGGER
+from lucifer.modules.disable import DisableAbleCommandHandler
+from lucifer.modules.helper_funcs.chat_status import user_admin, user_not_admin, connection_status
+from lucifer.modules.helper_funcs.extraction import extract_text
+from lucifer.modules.helper_funcs.misc import split_message
 
 BLACKLIST_GROUP = 11
 

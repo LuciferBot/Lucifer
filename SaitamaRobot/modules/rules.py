@@ -6,10 +6,10 @@ from telegram.error import BadRequest
 from telegram.ext import CommandHandler, run_async, Filters
 from telegram.utils.helpers import escape_markdown
 
-import SaitamaRobot.modules.sql.rules_sql as sql
-from SaitamaRobot import dispatcher
-from SaitamaRobot.modules.helper_funcs.chat_status import user_admin
-from SaitamaRobot.modules.helper_funcs.string_handling import markdown_parser
+import lucifer.modules.sql.rules_sql as sql
+from lucifer import dispatcher
+from lucifer.modules.helper_funcs.chat_status import user_admin
+from lucifer.modules.helper_funcs.string_handling import markdown_parser
 
 
 @run_async

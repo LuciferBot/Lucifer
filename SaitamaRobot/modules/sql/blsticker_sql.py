@@ -2,7 +2,7 @@ import threading
 
 from sqlalchemy import func, distinct, Column, String, UnicodeText, Integer
 
-from SaitamaRobot.modules.sql import SESSION, BASE
+from lucifer.modules.sql import SESSION, BASE
 
 
 class StickersFilters(BASE):

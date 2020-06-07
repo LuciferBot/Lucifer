@@ -6,13 +6,13 @@ from telegram.error import BadRequest
 from telegram.ext import CommandHandler, Filters, run_async
 from telegram.utils.helpers import mention_html
 
-from SaitamaRobot import dispatcher, LOGGER, DEV_USERS, SUDO_USERS, TIGER_USERS
-from SaitamaRobot.modules.disable import DisableAbleCommandHandler
-from SaitamaRobot.modules.helper_funcs.chat_status import (bot_admin, user_admin, is_user_ban_protected, can_restrict,
+from lucifer import dispatcher, LOGGER, DEV_USERS, SUDO_USERS, TIGER_USERS
+from lucifer.modules.disable import DisableAbleCommandHandler
+from lucifer.modules.helper_funcs.chat_status import (bot_admin, user_admin, is_user_ban_protected, can_restrict,
                                                      is_user_admin, is_user_in_chat, connection_status, can_delete, user_can_ban)
-from SaitamaRobot.modules.helper_funcs.extraction import extract_user_and_text
-from SaitamaRobot.modules.helper_funcs.string_handling import extract_time
-from SaitamaRobot.modules.log_channel import loggable, gloggable
+from lucifer.modules.helper_funcs.extraction import extract_user_and_text
+from lucifer.modules.helper_funcs.string_handling import extract_time
+from lucifer.modules.log_channel import loggable, gloggable
 
 
 @run_async

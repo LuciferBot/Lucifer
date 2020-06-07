@@ -11,8 +11,8 @@ from telegram import Update, Bot
 from telegram.ext import run_async
 from telegram.utils.helpers import escape_markdown
 
-from SaitamaRobot import dispatcher
-from SaitamaRobot.modules.disable import DisableAbleCommandHandler
+from lucifer import dispatcher
+from lucifer.modules.disable import DisableAbleCommandHandler
 
 
 @run_async

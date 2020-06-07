@@ -5,7 +5,7 @@ import requests
 from telegram import Update, Bot
 from telegram.ext import CommandHandler
 
-from SaitamaRobot import dispatcher
+from lucifer import dispatcher
 
 # Open API key
 API_KEY = "6ae0c3a0-afdc-4532-a810-82ded0054236"

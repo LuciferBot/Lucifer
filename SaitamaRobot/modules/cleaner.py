@@ -5,10 +5,10 @@ from typing import List
 from telegram import Bot, Update, ParseMode
 from telegram.ext import CommandHandler, MessageHandler, Filters, run_async
 
-from SaitamaRobot import ALLOW_EXCL, dispatcher, CustomCommandHandler
-from SaitamaRobot.modules.disable import DisableAbleCommandHandler
-from SaitamaRobot.modules.helper_funcs.chat_status import user_admin, bot_can_delete, dev_plus, connection_status
-from SaitamaRobot.modules.sql import cleaner_sql as sql
+from lucifer import ALLOW_EXCL, dispatcher, CustomCommandHandler
+from lucifer.modules.disable import DisableAbleCommandHandler
+from lucifer.modules.helper_funcs.chat_status import user_admin, bot_can_delete, dev_plus, connection_status
+from lucifer.modules.sql import cleaner_sql as sql
 
 if ALLOW_EXCL:
     CMD_STARTERS = ('/', '!')

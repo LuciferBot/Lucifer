@@ -8,13 +8,13 @@ from telegram.error import BadRequest
 from telegram.ext import CommandHandler, MessageHandler, Filters, run_async
 from telegram.utils.helpers import mention_html
 
-import SaitamaRobot.modules.sql.locks_sql as sql
-from SaitamaRobot import dispatcher, SUDO_USERS, DEV_USERS, LOGGER
-from SaitamaRobot.modules.disable import DisableAbleCommandHandler
-from SaitamaRobot.modules.helper_funcs.chat_status import (can_delete, is_user_admin, user_not_admin, user_admin,
+import lucifer.modules.sql.locks_sql as sql
+from lucifer import dispatcher, SUDO_USERS, DEV_USERS, LOGGER
+from lucifer.modules.disable import DisableAbleCommandHandler
+from lucifer.modules.helper_funcs.chat_status import (can_delete, is_user_admin, user_not_admin, user_admin,
                                                      bot_can_delete, is_bot_admin, connection_status)
-from SaitamaRobot.modules.helper_funcs.filters import CustomFilters
-from SaitamaRobot.modules.log_channel import loggable
+from lucifer.modules.helper_funcs.filters import CustomFilters
+from lucifer.modules.log_channel import loggable
 
 LOCK_TYPES = {
     'sticker': Filters.sticker,

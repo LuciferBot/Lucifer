@@ -6,10 +6,10 @@ from telegram import MessageEntity, ParseMode
 from telegram.error import BadRequest
 from telegram.ext import Filters, MessageHandler, run_async
 
-from SaitamaRobot import dispatcher
-from SaitamaRobot.modules.disable import DisableAbleCommandHandler, DisableAbleRegexHandler
-from SaitamaRobot.modules.sql import afk_sql as sql
-from SaitamaRobot.modules.users import get_user_id
+from lucifer import dispatcher
+from lucifer.modules.disable import DisableAbleCommandHandler, DisableAbleRegexHandler
+from lucifer.modules.sql import afk_sql as sql
+from lucifer.modules.users import get_user_id
 
 
 AFK_GROUP = 7

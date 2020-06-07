@@ -2,8 +2,8 @@ import requests
 from telegram import Update, Bot, ParseMode
 from telegram.ext import run_async
 
-from SaitamaRobot import dispatcher
-from SaitamaRobot.modules.disable import DisableAbleCommandHandler
+from lucifer import dispatcher
+from lucifer.modules.disable import DisableAbleCommandHandler
 
 
 @run_async
