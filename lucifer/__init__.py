@@ -84,7 +84,7 @@ if ENV:
         raise Exception("Your blacklisted chats list does not contain valid integers.")
 
 else:
-    from SaitamaRobot.config import Development as Config
+    from lucifer.config import Development as Config
     TOKEN = Config.API_KEY
 
     try:
@@ -162,7 +162,7 @@ TIGER_USERS = list(TIGER_USERS)
 SPAMMERS = list(SPAMMERS)
 
 # Load at end to ensure all prev variables have been set
-from SaitamaRobot.modules.helper_funcs.handlers import CustomCommandHandler, CustomRegexHandler, CustomMessageHandler
+from lucifer.modules.helper_funcs.handlers import CustomCommandHandler, CustomRegexHandler, CustomMessageHandler
 
 # make sure the regex handler can take extra kwargs
 tg.RegexHandler = CustomRegexHandler
