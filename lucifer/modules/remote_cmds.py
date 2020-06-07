@@ -24,6 +24,7 @@ RBAN_ERRORS = {
     "Chat_admin_required",
     "Only the creator of a basic group can kick group administrators",
     "Channel_private",
+    "Oof, u know u suck at this",
     "Not in the chat"
 }
 
@@ -95,7 +96,7 @@ def rban(bot: Bot, update: Update, args: List[str]):
     user_id, chat_id = extract_user_and_text(message, args)
 
     if not user_id:
-        message.reply_text("You don't seem to be referring to a user or the ID specified is incorrect..")
+        message.reply_text("You don't seem to be referring to a user.")
         return
     elif not chat_id:
         message.reply_text("You don't seem to be referring to a chat.")
@@ -162,7 +163,7 @@ def runban(bot: Bot, update: Update, args: List[str]):
     user_id, chat_id = extract_user_and_text(message, args)
 
     if not user_id:
-        message.reply_text("You don't seem to be referring to a user or the ID specified is incorrect..")
+        message.reply_text("You don't seem to be referring to a user.")
         return
     elif not chat_id:
         message.reply_text("You don't seem to be referring to a chat.")
@@ -193,7 +194,7 @@ def runban(bot: Bot, update: Update, args: List[str]):
             return
         else:
             raise
-
+            
     if is_user_in_chat(chat, user_id):
         message.reply_text("Why are you trying to remotely unban someone that's already in that chat?")
         return
@@ -229,7 +230,7 @@ def rkick(bot: Bot, update: Update, args: List[str]):
     user_id, chat_id = extract_user_and_text(message, args)
 
     if not user_id:
-        message.reply_text("You don't seem to be referring to a user or the ID specified is incorrect..")
+        message.reply_text("You don't seem to be referring to a user.")
         return
     elif not chat_id:
         message.reply_text("You don't seem to be referring to a chat.")
@@ -296,7 +297,7 @@ def rmute(bot: Bot, update: Update, args: List[str]):
     user_id, chat_id = extract_user_and_text(message, args)
 
     if not user_id:
-        message.reply_text("You don't seem to be referring to a user or the ID specified is incorrect..")
+        message.reply_text("You don't seem to be referring to a user.")
         return
     elif not chat_id:
         message.reply_text("You don't seem to be referring to a chat.")
@@ -363,7 +364,7 @@ def runmute(bot: Bot, update: Update, args: List[str]):
     user_id, chat_id = extract_user_and_text(message, args)
 
     if not user_id:
-        message.reply_text("You don't seem to be referring to a user or the ID specified is incorrect..")
+        message.reply_text("You don't seem to be referring to a user.")
         return
     elif not chat_id:
         message.reply_text("You don't seem to be referring to a chat.")
@@ -394,7 +395,7 @@ def runmute(bot: Bot, update: Update, args: List[str]):
             return
         else:
             raise
-
+            
     if is_user_in_chat(chat, user_id):
        if member.can_send_messages and member.can_send_media_messages \
           and member.can_send_other_messages and member.can_add_web_page_previews:
@@ -438,4 +439,4 @@ dispatcher.add_handler(RBAN_HANDLER)
 dispatcher.add_handler(RUNBAN_HANDLER)
 dispatcher.add_handler(RKICK_HANDLER)
 dispatcher.add_handler(RMUTE_HANDLER)
-dispatcher.add_handler(RUNMUTE_HANDLER) 
+dispatcher.add_handler(RUNMUTE_HANDLER)

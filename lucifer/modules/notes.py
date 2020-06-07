@@ -10,11 +10,14 @@ from telegram.ext.dispatcher import run_async
 from telegram.utils.helpers import escape_markdown
 
 import lucifer.modules.sql.notes_sql as sql
-from lucifer import dispatcher, MESSAGE_DUMP, LOGGER, SUPPORT_CHAT
+from lucifer import dispatcher, MESSAGE_DUMP, LOGGER
 from lucifer.modules.disable import DisableAbleCommandHandler
 from lucifer.modules.helper_funcs.chat_status import user_admin
 from lucifer.modules.helper_funcs.misc import build_keyboard, revert_buttons
 from lucifer.modules.helper_funcs.msg_types import get_note_type
+from lucifer.modules.helper_funcs.string_handling import escape_invalid_curly_brackets
+from lucifer.modules.connection import connected
+from lucifer.modules.helper_funcs.alternate import send_message
 
 FILE_MATCHER = re.compile(r"^###file_id(!photo)?###:(.*?)(?:\s|$)")
 
@@ -101,7 +104,7 @@ def get(bot, update, notename, show_none=True, no_format=False):
                     sql.rm_note(chat_id, notename)
                 else:
                     message.reply_text("This note could not be sent, as it is incorrectly formatted. Ask in "
-                                       f"{SUPPORT_CHAT} if you can't figure out why!")
+                                       "@luciferbot if you can't figure out why!")
                     LOGGER.exception("Could not parse message #%s in chat %s", notename, str(chat_id))
                     LOGGER.warning("Message was: %s", str(note.value))
         return
@@ -112,9 +115,9 @@ def get(bot, update, notename, show_none=True, no_format=False):
 @run_async
 def cmd_get(bot: Bot, update: Update, args: List[str]):
     if len(args) >= 2 and args[1].lower() == "noformat":
-        get(bot, update, args[0].lower(), show_none=True, no_format=True)
+        get(bot, update, args[0], show_none=True, no_format=True)
     elif len(args) >= 1:
-        get(bot, update, args[0].lower(), show_none=True)
+        get(bot, update, args[0], show_none=True)
     else:
         update.effective_message.reply_text("Get rekt")
 
@@ -123,7 +126,7 @@ def cmd_get(bot: Bot, update: Update, args: List[str]):
 def hash_get(bot: Bot, update: Update):
     message = update.effective_message.text
     fst_word = message.split()[0]
-    no_hash = fst_word[1:].lower()
+    no_hash = fst_word[1:]
     get(bot, update, no_hash, show_none=False)
 
 
@@ -134,14 +137,18 @@ def save(bot: Bot, update: Update):
     msg = update.effective_message  # type: Optional[Message]
 
     note_name, text, data_type, content, buttons = get_note_type(msg)
-    note_name = note_name.lower()
+
     if data_type is None:
         msg.reply_text("Dude, there's no note")
         return
-
+    
+    if len(text.strip()) == 0:
+        text = note_name
+        
     sql.add_note_to_db(chat_id, note_name, text, data_type, buttons=buttons, file=content)
 
-    msg.reply_text(f"Yas! Added {note_name}.\nGet it with /get {note_name}, or #{note_name}")
+    msg.reply_text(
+        "Your {note_name} note is added.\nGet it with /get {note_name}, or #{note_name}".format(note_name=note_name))
 
     if msg.reply_to_message and msg.reply_to_message.from_user.is_bot:
         if text:
@@ -162,7 +169,7 @@ def save(bot: Bot, update: Update):
 def clear(bot: Bot, update: Update, args: List[str]):
     chat_id = update.effective_chat.id
     if len(args) >= 1:
-        notename = args[0].lower()
+        notename = args[0]
 
         if sql.rm_note(chat_id, notename):
             update.effective_message.reply_text("Successfully removed note.")
@@ -173,21 +180,89 @@ def clear(bot: Bot, update: Update, args: List[str]):
 @run_async
 def list_notes(bot: Bot, update: Update):
     chat_id = update.effective_chat.id
+    chat = update.effective_chat  # type: Optional[Chat]
+    user = update.effective_user  # type: Optional[User]
     note_list = sql.get_all_chat_notes(chat_id)
-
-    msg = "*Notes in chat:*\n"
+    chat_name = chat.title or chat.first or chat.username
+    msg = "*List of notes in {}:*\n"
+    des = "You can get notes by using `/get notename`, or `#notename`.\n"
     for note in note_list:
-        note_name = escape_markdown(f" - {note.name.lower()}\n")
+        note_name = (" • `{}`\n".format(note.name))
         if len(msg) + len(note_name) > MAX_MESSAGE_LENGTH:
             update.effective_message.reply_text(msg, parse_mode=ParseMode.MARKDOWN)
             msg = ""
         msg += note_name
 
-    if msg == "*Notes in chat:*\n":
+    if msg == "*List of notes in {}:*\n":
         update.effective_message.reply_text("No notes in this chat!")
 
     elif len(msg) != 0:
-        update.effective_message.reply_text(msg, parse_mode=ParseMode.MARKDOWN)
+        update.effective_message.reply_text(msg.format(chat_name) + des, parse_mode=ParseMode.MARKDOWN)
+
+@run_async
+@user_admin
+def private_note(bot: Bot, update: Update, args: List[str]):
+
+	chat = update.effective_chat  # type: Optional[Chat]
+	user = update.effective_user  # type: Optional[User]
+	conn = connected(bot, update, chat, user.id)
+	if conn:
+		chat_id = conn
+		chat_name = dispatcher.bot.getChat(conn).title
+	else:
+		chat_id = update.effective_chat.id
+		if chat.type == "private":
+			chat_name = chat.title
+		else:
+			chat_name = chat.title
+
+	if len(args) >= 1:
+		if args[0] in ("yes", "on"):
+			if len(args) >= 2:
+				if args[1] == "del":
+					sql.private_note(str(chat_id), True, True)
+					send_message(update.effective_message, "Private Note was *enabled*, when users get notes, the message will be sent to the PM and the hashtag message will be deleted.", parse_mode="markdown")
+				else:
+					sql.private_note(str(chat_id), True, False)
+					send_message(update.effective_message, "Private Note was *enabled*, when users get notes, the message will be sent to the PM.", parse_mode="markdown")
+			else:
+				sql.private_note(str(chat_id), True, False)
+				send_message(update.effective_message, "Private Note was *enabled*, when users get notes, the message will be sent to the PM.", parse_mode="markdown")
+		elif args[0] in ("no", "off"):
+			sql.private_note(str(chat_id), False, False)
+			send_message(update.effective_message, "Private Note was *disabled*, notes will be sent to group.", parse_mode="markdown")
+		else:
+			send_message(update.effective_message, "Unknown argument - please use 'yes', or 'no'.")
+	else:
+		is_private, is_delete = sql.get_private_note(chat_id)
+		print(is_private, is_delete)
+		send_message(update.effective_message, "Current Private Note settings at {}: *{}*{}".format(chat_name, "Enabled" if is_private else "Disabled", " - *Hash will be deleted*" if is_delete else ""), parse_mode="markdown")
+
+@run_async
+@user_admin
+def remove_all_notes(bot: Bot, update: Update):
+    chat = update.effective_chat
+    user = update.effective_user
+    message = update.effective_message
+    msg_id = update.effective_message.message_id
+
+    if chat.type == "private":
+        pass
+    else:
+        owner = chat.get_member(user.id)
+        if owner.status != 'creator':
+            message.reply_text(chat.id, "You must be this chat creator.")
+            return
+
+    note_list = sql.get_all_chat_notes(chat.id)
+    x = 0
+    for notename in note_list:
+        x += 1
+        note = notename.name.lower()
+        sql.rm_note(chat.id, note)
+
+    bot.send_message(chat.id, text ="notes from this chat have been removed.",reply_to_message_id=msg_id)
+
 
 
 def __import_data__(chat_id, data):
@@ -213,7 +288,7 @@ def __import_data__(chat_id, data):
 
 
 def __stats__():
-    return f"{sql.num_notes()} notes, across {sql.num_chats()} chats."
+    return "{} notes, across {} chats.".format(sql.num_notes(), sql.num_chats())
 
 
 def __migrate__(old_chat_id, new_chat_id):
@@ -222,38 +297,43 @@ def __migrate__(old_chat_id, new_chat_id):
 
 def __chat_settings__(chat_id, user_id):
     notes = sql.get_all_chat_notes(chat_id)
-    return f"There are `{len(notes)}` notes in this chat."
+    return "There are `{}` notes in this chat.".format(len(notes))
 
 
 __help__ = """
- • `/get <notename>`*:* get the note with this notename
- • `#<notename>`*:* same as /get
- • `/notes` or `/saved`*:* list all saved notes in this chat
+ - /get <notename>: get the note with this notename
+ - #<notename>: same as /get
+ - /notes or /saved: list all saved notes in this chat
 
 If you would like to retrieve the contents of a note without any formatting, use `/get <notename> noformat`. This can \
 be useful when updating a current note.
 
-*Admins only:*
- • `/save <notename> <notedata>`*:* saves notedata as a note with name notename
+*Admin only:*
+ - /save <notename> <notedata>: saves notedata as a note with name notename
 A button can be added to a note by using standard markdown link syntax - the link should just be prepended with a \
-`buttonurl:` section, as such: `[somelink](buttonurl:example.com)`. Check `/markdownhelp` for more info.
- • `/save <notename>`*:* save the replied message as a note with name notename
- • `/clear <notename>`*:* clear note with this name
- *Note:* Note names are case-insensitive, and they are automatically converted to lowercase before getting saved.
+`buttonurl:` section, as such: `[somelink](buttonurl:example.com)`. Check /markdownhelp for more info.
+ - /save <notename>: save the replied message as a note with name notename
+ - /clearall: Clean all notes in your group, only use this if you know what you're doing
+ - /clear <notename>: clear note with this name
+ - /privatenote <on/yes/off/no> <? del>: whether or not to send the note in PM. Write `del` besides on/off to delete hashtag message on group.
 """
 
 __mod_name__ = "Notes"
 
 GET_HANDLER = CommandHandler("get", cmd_get, pass_args=True)
 HASH_GET_HANDLER = RegexHandler(r"^#[^\s]+", hash_get)
-
+REMOVE_ALL_NOTES_HANDLER = CommandHandler("clearall", remove_all_notes)
 SAVE_HANDLER = CommandHandler("save", save)
 DELETE_HANDLER = CommandHandler("clear", clear, pass_args=True)
 
 LIST_HANDLER = DisableAbleCommandHandler(["notes", "saved"], list_notes, admin_ok=True)
+
+PMNOTE_HANDLER = CommandHandler("privatenote", private_note, pass_args=True)
 
 dispatcher.add_handler(GET_HANDLER)
 dispatcher.add_handler(SAVE_HANDLER)
 dispatcher.add_handler(LIST_HANDLER)
 dispatcher.add_handler(DELETE_HANDLER)
 dispatcher.add_handler(HASH_GET_HANDLER)
+dispatcher.add_handler(PMNOTE_HANDLER)
+dispatcher.add_handler(REMOVE_ALL_NOTES_HANDLER)

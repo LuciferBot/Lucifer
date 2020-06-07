@@ -7,7 +7,7 @@ from telegram.error import BadRequest
 from telegram.ext import CommandHandler, run_async
 from telegram.utils.helpers import mention_html
 
-from lucifer import dispatcher, LOGGER, TIGER_USERS
+from lucifer import dispatcher, LOGGER
 from lucifer.modules.helper_funcs.chat_status import (bot_admin, user_admin, is_user_admin, can_restrict,
                                                      connection_status)
 from lucifer.modules.helper_funcs.extraction import extract_user, extract_user_and_text
@@ -17,7 +17,7 @@ from lucifer.modules.log_channel import loggable
 
 def check_user(user_id: int, bot: Bot, chat: Chat) -> Optional[str]:
     if not user_id:
-        reply = "You don't seem to be referring to a user or the ID specified is incorrect.."
+        reply = "You don't seem to be referring to a user."
         return reply
 
     try:
@@ -33,8 +33,8 @@ def check_user(user_id: int, bot: Bot, chat: Chat) -> Optional[str]:
         reply = "I'm not gonna MUTE myself, How high are you?"
         return reply
 
-    if is_user_admin(chat, user_id, member) or user_id in TIGER_USERS:
-        reply = "I really wish I could mute admins...Perhaps a Punch?"
+    if is_user_admin(chat, user_id, member):
+        reply = "I really wish I could mute admins."
         return reply
 
     return None
@@ -47,6 +47,7 @@ def check_user(user_id: int, bot: Bot, chat: Chat) -> Optional[str]:
 @loggable
 def mute(bot: Bot, update: Update, args: List[str]) -> str:
     chat = update.effective_chat
+    chat_name = chat.title or chat.first or chat.username
     user = update.effective_user
     message = update.effective_message
 
@@ -69,7 +70,7 @@ def mute(bot: Bot, update: Update, args: List[str]) -> str:
 
     if member.can_send_messages is None or member.can_send_messages:
         bot.restrict_chat_member(chat.id, user_id, can_send_messages=False)
-        bot.sendMessage(chat.id, f"Muted <b>{html.escape(member.user.first_name)}</b> with no expiration date!",
+        bot.sendMessage(chat.id, f"<b>{html.escape(member.user.first_name)}</b> is muted in " + f"{chat_name}",
                         parse_mode=ParseMode.HTML)
         return log
 
@@ -86,6 +87,7 @@ def mute(bot: Bot, update: Update, args: List[str]) -> str:
 @loggable
 def unmute(bot: Bot, update: Update, args: List[str]) -> str:
     chat = update.effective_chat
+    chat_name = chat.title or chat.first or chat.username
     user = update.effective_user
     message = update.effective_message
 
@@ -108,7 +110,7 @@ def unmute(bot: Bot, update: Update, args: List[str]) -> str:
                                      can_send_media_messages=True,
                                      can_send_other_messages=True,
                                      can_add_web_page_previews=True)
-            bot.sendMessage(chat.id, f"I shall allow <b>{html.escape(member.user.first_name)}</b> to text!",
+            bot.sendMessage(chat.id, f"Yep, <b>{html.escape(member.user.first_name)}</b> can start talking again in " + f"{chat_name}",
                             parse_mode=ParseMode.HTML)
             return (f"<b>{html.escape(chat.title)}:</b>\n"
                     f"#UNMUTE\n"
@@ -190,10 +192,10 @@ def temp_mute(bot: Bot, update: Update, args: List[str]) -> str:
 
 
 __help__ = """
-*Admins only:*
- • `/mute <userhandle>`*:* silences a user. Can also be used as a reply, muting the replied to user.
- • `/tmute <userhandle> x(m/h/d)`*:* mutes a user for x time. (via handle, or reply). `m` = `minutes`, `h` = `hours`, `d` = `days`.
- • `/unmute <userhandle>`*:* unmutes a user. Can also be used as a reply, muting the replied to user.
+*Admin only:*
+ - /mute <userhandle>: silences a user. Can also be used as a reply, muting the replied to user.
+ - /tmute <userhandle> x(m/h/d): mutes a user for x time. (via handle, or reply). m = minutes, h = hours, d = days.
+ - /unmute <userhandle>: unmutes a user. Can also be used as a reply, muting the replied to user.
 """
 
 MUTE_HANDLER = CommandHandler("mute", mute, pass_args=True)

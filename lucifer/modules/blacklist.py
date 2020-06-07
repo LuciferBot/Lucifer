@@ -1,12 +1,14 @@
 import html
 import re
+
 from typing import List
 
 from telegram import Bot, Update, ParseMode
 from telegram.error import BadRequest
 from telegram.ext import CommandHandler, MessageHandler, Filters, run_async
-from lucifer.modules.helper_funcs.regex_helper import infinite_loop_check, regex_searcher
+
 import lucifer.modules.sql.blacklist_sql as sql
+
 from lucifer import dispatcher, LOGGER
 from lucifer.modules.disable import DisableAbleCommandHandler
 from lucifer.modules.helper_funcs.chat_status import user_admin, user_not_admin, connection_status
@@ -15,16 +17,11 @@ from lucifer.modules.helper_funcs.misc import split_message
 
 BLACKLIST_GROUP = 11
 
-def infinite_loop_check(regex):
-     loop_matches = [r'\((.{1,}[\+\*]){1,}\)[\+\*].', r'[\(\[].{1,}\{\d(,)?\}[\)\]]\{\d(,)?\}', r'\(.{1,}\)\{.{1,}(,)?\}\(.*\)(\+|\* |\{.*\})']
-     for match in loop_matches:
-          match_1 = re.search(match, regex)
-          if match_1: return True
 
 @run_async
 @connection_status
-@user_admin
 def blacklist(bot: Bot, update: Update, args: List[str]):
+
     msg = update.effective_message
     chat = update.effective_chat
 
@@ -32,29 +29,28 @@ def blacklist(bot: Bot, update: Update, args: List[str]):
     message_chat_title = update.effective_message.chat.title
 
     if update_chat_title == message_chat_title:
-        base_blacklist_string = "Current <b>blacklisted</b> words:\n"
+        BASE_BLACKLIST_STRING = "Current <b>blacklisted</b> words:\n"
     else:
-        base_blacklist_string = f"Current <b>blacklisted</b> words in <b>{update_chat_title}</b>:\n"
+        BASE_BLACKLIST_STRING = f"Current <b>blacklisted</b> words in <b>{update_chat_title}</b>:\n"
 
     all_blacklisted = sql.get_chat_blacklist(chat.id)
 
-    filter_list = base_blacklist_string
+    filter_list = BASE_BLACKLIST_STRING
 
     if len(args) > 0 and args[0].lower() == 'copy':
         for trigger in all_blacklisted:
-            filter_list += f"<code>{html.escape(trigger)}</code>\n"
+            filter_list += "<code>{}</code>\n".format(html.escape(trigger))
     else:
         for trigger in all_blacklisted:
-            filter_list += f" - <code>{html.escape(trigger)}</code>\n"
+            filter_list += " - <code>{}</code>\n".format(html.escape(trigger))
 
     split_text = split_message(filter_list)
     for text in split_text:
-        if text == base_blacklist_string:
+        if text == BASE_BLACKLIST_STRING:
             if update_chat_title == message_chat_title:
                 msg.reply_text("There are no blacklisted messages here!")
             else:
-                msg.reply_text(f"There are no blacklisted messages in <b>{update_chat_title}</b>!",
-                               parse_mode=ParseMode.HTML)
+                msg.reply_text(f"There are no blacklisted messages in <b>{update_chat_title}</b>!", parse_mode=ParseMode.HTML)
             return
         msg.reply_text(text, parse_mode=ParseMode.HTML)
 
@@ -63,6 +59,7 @@ def blacklist(bot: Bot, update: Update, args: List[str]):
 @connection_status
 @user_admin
 def add_blacklist(bot: Bot, update: Update):
+
     msg = update.effective_message
     chat = update.effective_chat
     words = msg.text.split(None, 1)
@@ -70,27 +67,17 @@ def add_blacklist(bot: Bot, update: Update):
     if len(words) > 1:
         text = words[1]
         to_blacklist = list(set(trigger.strip() for trigger in text.split("\n") if trigger.strip()))
-
+        
         for trigger in to_blacklist:
-            try:
-                re.compile(trigger)
-            except Exception as exce:
-                msg.reply_text(f"Couldn't add regex, Error: {exce}")
-                return
-            check = infinite_loop_check(trigger)
-            if not check:
-               sql.add_to_blacklist(chat.id, trigger.lower())
-            else:
-                msg.reply_text("I'm afraid I can't add that regex.")
-                return
+            sql.add_to_blacklist(chat.id, trigger.lower())
 
         if len(to_blacklist) == 1:
-            msg.reply_text(f"Added <code>{html.escape(to_blacklist[0])}</code> to the blacklist!",
+            msg.reply_text("Added <code>{}</code> to the blacklist!".format(html.escape(to_blacklist[0])),
                            parse_mode=ParseMode.HTML)
 
         else:
-            msg.reply_text(f"Added <code>{len(to_blacklist)}</code> triggers to the blacklist.",
-                           parse_mode=ParseMode.HTML)
+            msg.reply_text(
+                "Added <code>{}</code> triggers to the blacklist.".format(len(to_blacklist)), parse_mode=ParseMode.HTML)
 
     else:
         msg.reply_text("Tell me which words you would like to remove from the blacklist.")
@@ -100,6 +87,7 @@ def add_blacklist(bot: Bot, update: Update):
 @connection_status
 @user_admin
 def unblacklist(bot: Bot, update: Update):
+
     msg = update.effective_message
     chat = update.effective_chat
     words = msg.text.split(None, 1)
@@ -116,21 +104,25 @@ def unblacklist(bot: Bot, update: Update):
 
         if len(to_unblacklist) == 1:
             if successful:
-                msg.reply_text(f"Removed <code>{html.escape(to_unblacklist[0])}</code> from the blacklist!",
+                msg.reply_text("Removed <code>{}</code> from the blacklist!".format(html.escape(to_unblacklist[0])),
                                parse_mode=ParseMode.HTML)
             else:
                 msg.reply_text("This isn't a blacklisted trigger...!")
 
         elif successful == len(to_unblacklist):
-            msg.reply_text(f"Removed <code>{successful}</code> triggers from the blacklist.", parse_mode=ParseMode.HTML)
+            msg.reply_text(
+                "Removed <code>{}</code> triggers from the blacklist.".format(
+                    successful), parse_mode=ParseMode.HTML)
 
         elif not successful:
-            msg.reply_text("None of these triggers exist, so they weren't removed.", parse_mode=ParseMode.HTML)
+            msg.reply_text(
+                "None of these triggers exist, so they weren't removed.", parse_mode=ParseMode.HTML)
 
         else:
-            msg.reply_text(f"Removed <code>{successful}</code> triggers from the blacklist."
-                           f" {len(to_unblacklist) - successful} did not exist, so were not removed.",
-                           parse_mode=ParseMode.HTML)
+            msg.reply_text(
+                "Removed <code>{}</code> triggers from the blacklist. {} did not exist, "
+                "so were not removed.".format(successful, len(to_unblacklist) - successful),
+                parse_mode=ParseMode.HTML)
     else:
         msg.reply_text("Tell me which words you would like to remove from the blacklist.")
 
@@ -139,21 +131,18 @@ def unblacklist(bot: Bot, update: Update):
 @connection_status
 @user_not_admin
 def del_blacklist(bot: Bot, update: Update):
+
     chat = update.effective_chat
     message = update.effective_message
     to_match = extract_text(message)
-    msg = update.effective_message
+
     if not to_match:
         return
 
     chat_filters = sql.get_chat_blacklist(chat.id)
     for trigger in chat_filters:
-        pattern = r"( |^|[^\w])" + trigger + r"( |$|[^\w])"
-        match = regex_searcher(pattern, to_match)
-        if not match:
-            #Skip to next item in blacklist
-            continue
-        if match:
+        pattern = r"( |^|[^\w])" + re.escape(trigger) + r"( |$|[^\w])"
+        if re.search(pattern, to_match, flags=re.IGNORECASE):
             try:
                 message.delete()
             except BadRequest as excp:
@@ -184,24 +173,36 @@ the message will immediately be deleted. A good combo is sometimes to pair this 
 
 *NOTE:* blacklists do not affect group admins.
 
- • `/blacklist`*:* View the current blacklisted words.
+ - /blacklist: View the current blacklisted words.
 
-*Admins only:*
- • `/addblacklist <triggers>`*:* Add a trigger to the blacklist. Each line is considered one trigger, so using different \
+*Admin only:*
+ - /addblacklist <triggers>: Add a trigger to the blacklist. Each line is considered one trigger, so using different \
 lines will allow you to add multiple triggers.
- • `/unblacklist <triggers>`*:* Remove triggers from the blacklist. Same newline logic applies here, so you can remove \
+ - /unblacklist <triggers>: Remove triggers from the blacklist. Same newline logic applies here, so you can remove \
 multiple triggers at once.
- • `/rmblacklist <triggers>`*:* Same as above.
+ - /rmblacklist <triggers>: Same as above.
+ 
+ - /geturl: View the current blacklisted urls
+ - /addurl <urls>: Add a domain to the blacklist. The bot will automatically parse the url.
+ - /delurl <urls>: Remove urls from the blacklist.
+
+Example:
+/addblacklist "the admins suck" Respect your admins!
+This would delete any message containing 'the admins suck'.
+
+/addurl bit.ly
+This would delete any message containing url "bit.ly".
 """
 
-BLACKLIST_HANDLER = DisableAbleCommandHandler("blacklist", blacklist, pass_args=True)
+BLACKLIST_HANDLER = DisableAbleCommandHandler("blacklist", blacklist, pass_args=True, admin_ok=True)
 ADD_BLACKLIST_HANDLER = CommandHandler("addblacklist", add_blacklist)
 UNBLACKLIST_HANDLER = CommandHandler(["unblacklist", "rmblacklist"], unblacklist)
-BLACKLIST_DEL_HANDLER = MessageHandler((Filters.text | Filters.command | Filters.sticker | Filters.photo) & Filters.group, del_blacklist, edited_updates=True)
+BLACKLIST_DEL_HANDLER = MessageHandler(
+    (Filters.text | Filters.command | Filters.sticker | Filters.photo) & Filters.group, del_blacklist, edited_updates=True)
 dispatcher.add_handler(BLACKLIST_HANDLER)
 dispatcher.add_handler(ADD_BLACKLIST_HANDLER)
 dispatcher.add_handler(UNBLACKLIST_HANDLER)
 dispatcher.add_handler(BLACKLIST_DEL_HANDLER, group=BLACKLIST_GROUP)
 
-__mod_name__ = "Blacklist Word"
+__mod_name__ = "Blacklists"
 __handlers__ = [BLACKLIST_HANDLER, ADD_BLACKLIST_HANDLER, UNBLACKLIST_HANDLER, (BLACKLIST_DEL_HANDLER, BLACKLIST_GROUP)]

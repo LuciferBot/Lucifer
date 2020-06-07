@@ -1,17 +1,203 @@
 import html
-from typing import List
-
+import subprocess
+import importlib
+import os
+import json
+import sys
 import requests
+
+from typing import List
+from time import sleep
+
 from telegram import Bot, Update, ParseMode
 from telegram.error import BadRequest
 from telegram.ext import CommandHandler, Filters, run_async
-from telegram.utils.helpers import mention_html
+from telegram.utils.helpers import escape_markdown, mention_html
 
-from lucifer import dispatcher, TOKEN, SUDO_USERS
+from lucifer import dispatcher, WHITELIST_USERS, SUPPORT_USERS, SUDO_USERS, DEV_USERS, OWNER_ID, TOKEN
+from lucifer.__main__ import IMPORTED, HELPABLE, MIGRATEABLE, STATS, USER_INFO, DATA_IMPORT, DATA_EXPORT, CHAT_SETTINGS, USER_SETTINGS 
 from lucifer.modules.disable import DisableAbleCommandHandler
-from lucifer.modules.helper_funcs.chat_status import bot_admin, can_promote, user_admin, can_pin, connection_status
+from lucifer.modules.log_channel import loggable, gloggable
+from lucifer.modules.helper_funcs.chat_status import bot_admin, can_promote, user_admin, can_pin, sudo_plus, dev_plus, connection_status
 from lucifer.modules.helper_funcs.extraction import extract_user, extract_user_and_text
-from lucifer.modules.log_channel import loggable
+
+
+@run_async
+@dev_plus
+def gitpull(bot: Bot, update: Update):
+
+    sent_msg = update.effective_message.reply_text("Pulling all changes from remote and then attempting to restart.")
+    subprocess.Popen('git pull', stdout=subprocess.PIPE, shell=True)
+
+    sent_msg_text = sent_msg.text + "\n\nChanges pulled...I guess.. Restarting in "
+
+    for i in reversed(range(5)):
+        sent_msg.edit_text(sent_msg_text + str(i + 1))
+        sleep(1)
+    
+    sent_msg.edit_text("Restarted.")
+    
+    os.system('restart.bat')
+    os.execv('start.bat', sys.argv)
+
+
+@run_async
+@dev_plus
+def restart(bot: Bot, update: Update):
+
+    update.effective_message.reply_text("Starting a new instance and shutting down this one")
+
+    os.system('restart.bat')
+    os.execv('start.bat', sys.argv)
+
+
+@run_async
+@dev_plus
+def load(bot: Bot, update: Update):
+
+    message = update.effective_message
+    text = message.text.split(" ", 1)[1]
+    load_messasge = message.reply_text(f"Attempting to load module : <b>{text}</b>", parse_mode=ParseMode.HTML)
+    
+    try:
+        imported_module = importlib.import_module("lucifer.modules." + text)
+    except:
+        load_messasge.edit_text("Does that module even exist?")
+        return
+
+    if not hasattr(imported_module, "__mod_name__"):
+        imported_module.__mod_name__ = imported_module.__name__
+
+    if not imported_module.__mod_name__.lower() in IMPORTED:
+        IMPORTED[imported_module.__mod_name__.lower()] = imported_module
+    else:
+        load_messasge.edit_text("Module already loaded.")
+        return
+    
+    if "__handlers__" in dir(imported_module):
+        handlers = imported_module.__handlers__
+        for handler in handlers:
+            if type(handler) != tuple:
+                dispatcher.add_handler(handler)
+            else:
+                handler_name, priority = handler
+                dispatcher.add_handler(handler_name, priority)
+    else:
+        IMPORTED.pop(imported_module.__mod_name__.lower())
+        load_messasge.edit_text("The module doesn't have a handler list specified!")
+        return
+
+    if hasattr(imported_module, "__help__") and imported_module.__help__:
+        HELPABLE[imported_module.__mod_name__.lower()] = imported_module
+
+    # Chats to migrate on chat_migrated events
+    if hasattr(imported_module, "__migrate__"):
+        MIGRATEABLE.append(imported_module)
+
+    if hasattr(imported_module, "__stats__"):
+        STATS.append(imported_module)
+
+    if hasattr(imported_module, "__user_info__"):
+        USER_INFO.append(imported_module)
+
+    if hasattr(imported_module, "__import_data__"):
+        DATA_IMPORT.append(imported_module)
+
+    if hasattr(imported_module, "__export_data__"):
+        DATA_EXPORT.append(imported_module)
+
+    if hasattr(imported_module, "__chat_settings__"):
+        CHAT_SETTINGS[imported_module.__mod_name__.lower()] = imported_module
+
+    if hasattr(imported_module, "__user_settings__"):
+        USER_SETTINGS[imported_module.__mod_name__.lower()] = imported_module
+
+    load_messasge.edit_text("Successfully loaded module : <b>{}</b>".format(text), parse_mode=ParseMode.HTML)
+
+
+@run_async
+@dev_plus
+def unload(bot: Bot, update: Update):
+
+    message = update.effective_message
+    text = message.text.split(" ", 1)[1]
+    unload_messasge = message.reply_text(f"Attempting to unload module : <b>{text}</b>", parse_mode=ParseMode.HTML)
+
+    try:
+        imported_module = importlib.import_module("lucifer.modules." + text)
+    except:
+        unload_messasge.edit_text("Does that module even exist?")
+        return
+
+    if not hasattr(imported_module, "__mod_name__"):
+        imported_module.__mod_name__ = imported_module.__name__
+    
+    if imported_module.__mod_name__.lower() in IMPORTED:
+        IMPORTED.pop(imported_module.__mod_name__.lower())
+    else:
+        unload_messasge.edit_text("Can't unload something that isn't loaded.")
+        return
+    
+    if "__handlers__" in dir(imported_module):
+        handlers = imported_module.__handlers__
+        for handler in handlers:
+            if type(handler) == bool:
+                unload_messasge.edit_text("This module can't be unloaded!")
+                return
+            elif type(handler) != tuple:
+                dispatcher.remove_handler(handler)
+            else:
+                handler_name, priority = handler
+                dispatcher.remove_handler(handler_name, priority)
+    else:
+        unload_messasge.edit_text("The module doesn't have a handler list specified!")
+        return
+
+    if hasattr(imported_module, "__help__") and imported_module.__help__:
+        HELPABLE.pop(imported_module.__mod_name__.lower())
+
+    # Chats to migrate on chat_migrated events
+    if hasattr(imported_module, "__migrate__"):
+        MIGRATEABLE.remove(imported_module)
+
+    if hasattr(imported_module, "__stats__"):
+        STATS.remove(imported_module)
+
+    if hasattr(imported_module, "__user_info__"):
+        USER_INFO.remove(imported_module)
+
+    if hasattr(imported_module, "__import_data__"):
+        DATA_IMPORT.remove(imported_module)
+
+    if hasattr(imported_module, "__export_data__"):
+        DATA_EXPORT.remove(imported_module)
+
+    if hasattr(imported_module, "__chat_settings__"):
+        CHAT_SETTINGS.pop(imported_module.__mod_name__.lower())
+
+    if hasattr(imported_module, "__user_settings__"):
+        USER_SETTINGS.pop(imported_module.__mod_name__.lower())
+
+    unload_messasge.edit_text(f"Successfully unloaded module : <b>{text}</b>", parse_mode=ParseMode.HTML)
+
+
+@run_async
+@connection_status
+@sudo_plus
+@dev_plus
+def listmodules(bot: Bot, update: Update):
+
+    message = update.effective_message
+    module_list = []
+
+    for helpable_module in HELPABLE:
+        helpable_module_info = IMPORTED[helpable_module]
+        file_info = IMPORTED[helpable_module_info.__mod_name__.lower()]
+        file_name = file_info.__name__.rsplit("lucifer.modules.", 1)[1]
+        mod_name = file_info.__mod_name__
+        module_list.append(f'- <code>{mod_name} ({file_name})</code>\n')
+    module_list = "Following modules are loaded : \n\n" + ''.join(module_list)
+    message.reply_text(module_list, parse_mode=ParseMode.HTML)
 
 
 @run_async
@@ -21,28 +207,23 @@ from lucifer.modules.log_channel import loggable
 @user_admin
 @loggable
 def promote(bot: Bot, update: Update, args: List[str]) -> str:
+    
     message = update.effective_message
     chat = update.effective_chat
     user = update.effective_user
     log_message = ""
 
-    promoter = chat.get_member(user.id)
-    
-    if not (promoter.can_promote_members or promoter.status == "creator") and not user.id in SUDO_USERS:
-        message.reply_text("You don't have the necessary rights to do that!")
-        return ""
-
     user_id = extract_user(message, args)
 
     if not user_id:
-        message.reply_text("You don't seem to be referring to a user or the ID specified is incorrect..")
+        message.reply_text("You don't seem to be referring to a user.")
         return log_message
 
     try:
         user_member = chat.get_member(user_id)
     except:
         return log_message
-
+    
     if user_member.status == 'administrator' or user_member.status == 'creator':
         message.reply_text("How am I meant to promote someone that's already an admin?")
         return log_message
@@ -56,14 +237,14 @@ def promote(bot: Bot, update: Update, args: List[str]) -> str:
 
     try:
         bot.promoteChatMember(chat.id, user_id,
-                              can_change_info=bot_member.can_change_info,
-                              can_post_messages=bot_member.can_post_messages,
-                              can_edit_messages=bot_member.can_edit_messages,
-                              can_delete_messages=bot_member.can_delete_messages,
-                              can_invite_users=bot_member.can_invite_users,
-                              # can_promote_members=bot_member.can_promote_members,
-                              can_restrict_members=bot_member.can_restrict_members,
-                              can_pin_messages=bot_member.can_pin_messages)
+                            can_change_info=bot_member.can_change_info,
+                            can_post_messages=bot_member.can_post_messages,
+                            can_edit_messages=bot_member.can_edit_messages,
+                            can_delete_messages=bot_member.can_delete_messages,
+                            can_invite_users=bot_member.can_invite_users,
+                            # can_promote_members=bot_member.can_promote_members,
+                            can_restrict_members=bot_member.can_restrict_members,
+                            can_pin_messages=bot_member.can_pin_messages)
     except BadRequest as err:
         if err.message == "User_not_mutual_contact":
             message.reply_text("I can't promote someone who isn't in the group.")
@@ -71,14 +252,15 @@ def promote(bot: Bot, update: Update, args: List[str]) -> str:
         else:
             message.reply_text("An error occured while promoting.")
             return log_message
-
-    bot.sendMessage(chat.id, f"Sucessfully promoted <b>{user_member.user.first_name or user_id}</b>!",
-                    parse_mode=ParseMode.HTML)
-
-    log_message += (f"<b>{html.escape(chat.title)}:</b>\n"
-                    "#PROMOTED\n"
-                    f"<b>Admin:</b> {mention_html(user.id, user.first_name)}\n"
-                    f"<b>User:</b> {mention_html(user_member.user.id, user_member.user.first_name)}")
+                         
+    bot.sendMessage(chat.id, "Sucessfully promoted <b>{}</b>!".format(user_member.user.first_name or user_id), parse_mode=ParseMode.HTML)
+    
+    log_message += "<b>{}:</b>" \
+                   "\n#PROMOTED" \
+                   "\n<b>Admin:</b> {}" \
+                   "\n<b>User:</b> {}".format(html.escape(chat.title),
+                                                mention_html(user.id, user.first_name),
+                                                mention_html(user_member.user.id, user_member.user.first_name))
 
     return log_message
 
@@ -90,6 +272,7 @@ def promote(bot: Bot, update: Update, args: List[str]) -> str:
 @user_admin
 @loggable
 def demote(bot: Bot, update: Update, args: List[str]) -> str:
+
     chat = update.effective_chat
     message = update.effective_message
     user = update.effective_user
@@ -97,14 +280,14 @@ def demote(bot: Bot, update: Update, args: List[str]) -> str:
 
     user_id = extract_user(message, args)
     if not user_id:
-        message.reply_text("You don't seem to be referring to a user or the ID specified is incorrect..")
+        message.reply_text("You don't seem to be referring to a user.")
         return log_message
 
     try:
         user_member = chat.get_member(user_id)
     except:
         return log_message
-
+    
     if user_member.status == 'creator':
         message.reply_text("This person CREATED the chat, how would I demote them?")
         return log_message
@@ -128,28 +311,30 @@ def demote(bot: Bot, update: Update, args: List[str]) -> str:
                               can_pin_messages=False,
                               can_promote_members=False)
 
-        bot.sendMessage(chat.id, f"Sucessfully demoted <b>{user_member.user.first_name or user_id}</b>!",
-                        parse_mode=ParseMode.HTML)
+        bot.sendMessage(chat.id, "Sucessfully demoted <b>{}</b>!".format(user_member.user.first_name or user_id), parse_mode=ParseMode.HTML)
 
-        log_message += (f"<b>{html.escape(chat.title)}:</b>\n"
-                        f"#DEMOTED\n"
-                        f"<b>Admin:</b> {mention_html(user.id, user.first_name)}\n"
-                        f"<b>User:</b> {mention_html(user_member.user.id, user_member.user.first_name)}")
-
+        log_message += "<b>{}:</b>" \
+                       "\n#DEMOTED" \
+                       "\n<b>Admin:</b> {}" \
+                       "\n<b>User:</b> {}".format(html.escape(chat.title),
+                                                    mention_html(user.id, user.first_name),
+                                                    mention_html(user_member.user.id, user_member.user.first_name))
+        
         return log_message
     except BadRequest:
-        message.reply_text("Could not demote. I might not be admin, or the admin status was appointed by another"
-                           " user, so I can't act upon them!")
+        message.reply_text("Could not demote. I might not be admin, or the admin status was appointed by another" \
+                           "user, so I can't act upon them!")
         return log_message
 
 
-# Until the library releases the method
+#Until the library releases the method
 @run_async
 @connection_status
 @bot_admin
 @can_promote
 @user_admin
 def set_title(bot: Bot, update: Update, args: List[str]):
+
     chat = update.effective_chat
     message = update.effective_message
 
@@ -160,7 +345,7 @@ def set_title(bot: Bot, update: Update, args: List[str]):
         return
 
     if not user_id:
-        message.reply_text("You don't seem to be referring to a user or the ID specified is incorrect..")
+        message.reply_text("You don't seem to be referring to a user.")
         return
 
     if user_member.status == 'creator':
@@ -182,15 +367,11 @@ def set_title(bot: Bot, update: Update, args: List[str]):
     if len(title) > 16:
         message.reply_text("The title length is longer than 16 characters.\nTruncating it to 16 characters.")
 
-    result = requests.post(f"https://api.telegram.org/bot{TOKEN}/setChatAdministratorCustomTitle"
-                           f"?chat_id={chat.id}"
-                           f"&user_id={user_id}"
-                           f"&custom_title={title}")
+    result = requests.post(f"https://api.telegram.org/bot{TOKEN}/setChatAdministratorCustomTitle?chat_id={chat.id}&user_id={user_id}&custom_title={title}")
     status = result.json()["ok"]
 
-    if status is True:
-        bot.sendMessage(chat.id, f"Sucessfully set title for <code>{user_member.user.first_name or user_id}</code> "
-                                 f"to <code>{title[:16]}</code>!", parse_mode=ParseMode.HTML)
+    if status == True:
+        bot.sendMessage(chat.id, "Sucessfully set title for <code>{}</code> to <code>{}</code>!".format(user_member.user.first_name or user_id, title[:16]), parse_mode=ParseMode.HTML)
     else:
         description = result.json()["description"]
         if description == "Bad Request: not enough rights to change custom title of the user":
@@ -203,6 +384,7 @@ def set_title(bot: Bot, update: Update, args: List[str]):
 @user_admin
 @loggable
 def pin(bot: Bot, update: Update, args: List[str]) -> str:
+
     user = update.effective_user
     chat = update.effective_chat
 
@@ -221,10 +403,10 @@ def pin(bot: Bot, update: Update, args: List[str]) -> str:
                 pass
             else:
                 raise
-        log_message = (f"<b>{html.escape(chat.title)}:</b>\n"
-                       f"#PINNED\n"
-                       f"<b>Admin:</b> {mention_html(user.id, user.first_name)}")
-
+        log_message = "<b>{}:</b>" \
+                      "\n#PINNED" \
+                      "\n<b>Admin:</b> {}".format(html.escape(chat.title), mention_html(user.id, user.first_name))
+        
         return log_message
 
 
@@ -234,6 +416,7 @@ def pin(bot: Bot, update: Update, args: List[str]) -> str:
 @user_admin
 @loggable
 def unpin(bot: Bot, update: Update) -> str:
+
     chat = update.effective_chat
     user = update.effective_user
 
@@ -245,17 +428,18 @@ def unpin(bot: Bot, update: Update) -> str:
         else:
             raise
 
-    log_message = (f"<b>{html.escape(chat.title)}:</b>\n"
-                   f"#UNPINNED\n"
-                   f"<b>Admin:</b> {mention_html(user.id, user.first_name)}")
+    log_message = "<b>{}:</b>" \
+                  "\n#UNPINNED" \
+                  "\n<b>Admin:</b> {}".format(html.escape(chat.title),
+                                       mention_html(user.id, user.first_name))
 
     return log_message
-
 
 @run_async
 @bot_admin
 @user_admin
 def invite(bot: Bot, update: Update):
+
     chat = update.effective_chat
 
     if chat.username:
@@ -270,10 +454,10 @@ def invite(bot: Bot, update: Update):
     else:
         update.effective_message.reply_text("I can only give you invite links for supergroups and channels, sorry!")
 
-
 @run_async
 @connection_status
 def adminlist(bot: Bot, update: Update):
+
     chat = update.effective_chat
     user = update.effective_user
 
@@ -287,44 +471,53 @@ def adminlist(bot: Bot, update: Update):
         chat_name = "this chat"
     else:
         chat_name = update_chat_title
-
-    text = f"Admins in *{chat_name}*:"
+    
+    text = "Admins in *{}*:".format(chat_name)
 
     for admin in administrators:
         user = admin.user
-        name = f"[{user.first_name + (user.last_name or '')}](tg://user?id={user.id})"
-        text += f"\n - {name}"
+        name = "`{}`".format(user.first_name + (user.last_name or ""))
+        text += "\n - {}".format(name)
 
     update.effective_message.reply_text(text, parse_mode=ParseMode.MARKDOWN)
 
 
 def __chat_settings__(chat_id, user_id):
-    return "You are *admin*: `{}`".format(dispatcher.bot.get_chat_member(chat_id, user_id).status in ("administrator", "creator"))
-
+    return "You are *admin*: `{}`".format(
+        dispatcher.bot.get_chat_member(chat_id, user_id).status in ("administrator", "creator"))
 
 __help__ = """
- • `/adminlist`*:* list of admins in the chat
+ - /adminlist: list of admins in the chat
 
-*Admins only:*
- • `/pin`*:* silently pins the message replied to - add `'loud'` or `'notify'` to give notifs to users.
- • `/unpin`*:* unpins the currently pinned message
- • `/invitelink`*:* gets invitelink
- • `/promote`*:* promotes the user replied to
- • `/demote`*:* demotes the user replied to
- • `/settitle`*:* sets a custom title for an admin that the bot promoted
+*Admin only:*
+ - /pin: silently pins the message replied to - add 'loud' or 'notify' to give notifs to users.
+ - /unpin: unpins the currently pinned message
+ - /invitelink: gets invitelink
+ - /promote: promotes the user replied to
+ - /demote: demotes the user replied to
+ - /settitle: sets a custom title for an admin that the bot promoted
 """
 
-ADMINLIST_HANDLER = DisableAbleCommandHandler(["adminlist", "admins"], adminlist)
+ADMINLIST_HANDLER = DisableAbleCommandHandler(["adminlist","admins"], adminlist)
 
 PIN_HANDLER = CommandHandler("pin", pin, pass_args=True, filters=Filters.group)
 UNPIN_HANDLER = CommandHandler("unpin", unpin, filters=Filters.group)
 
 INVITE_HANDLER = DisableAbleCommandHandler("invitelink", invite, filters=Filters.group)
 
-PROMOTE_HANDLER = DisableAbleCommandHandler("promote", promote, pass_args=True)
-DEMOTE_HANDLER = DisableAbleCommandHandler("demote", demote, pass_args=True)
+PROMOTE_HANDLER = CommandHandler("promote", promote, pass_args=True)
+DEMOTE_HANDLER = CommandHandler("demote", demote, pass_args=True)
 
 SET_TITLE_HANDLER = CommandHandler("settitle", set_title, pass_args=True)
+
+GITPULL_HANDLER = CommandHandler("gitpull", gitpull)
+RESTART_HANDLER = CommandHandler("restart", restart)
+
+LOAD_HANDLER = CommandHandler("load", load)
+UNLOAD_HANDLER = CommandHandler("unload", unload)
+LISTMODULES_HANDLER = CommandHandler("listmodules", listmodules)
+
+
 
 dispatcher.add_handler(ADMINLIST_HANDLER)
 dispatcher.add_handler(PIN_HANDLER)
@@ -333,8 +526,11 @@ dispatcher.add_handler(INVITE_HANDLER)
 dispatcher.add_handler(PROMOTE_HANDLER)
 dispatcher.add_handler(DEMOTE_HANDLER)
 dispatcher.add_handler(SET_TITLE_HANDLER)
+dispatcher.add_handler(GITPULL_HANDLER)
+dispatcher.add_handler(RESTART_HANDLER)
+dispatcher.add_handler(LOAD_HANDLER)
+dispatcher.add_handler(UNLOAD_HANDLER)
+dispatcher.add_handler(LISTMODULES_HANDLER)
+
 
 __mod_name__ = "Admin"
-__command_list__ = ["adminlist", "admins", "invitelink", "promote", "demote"]
-__handlers__ = [ADMINLIST_HANDLER, PIN_HANDLER, UNPIN_HANDLER,
-                INVITE_HANDLER, PROMOTE_HANDLER, DEMOTE_HANDLER, SET_TITLE_HANDLER]

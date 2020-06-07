@@ -26,7 +26,7 @@ def translate(bot: Bot, update: Update):
         res = requests.get(URL, params=params)
         # print(res)
         # print(res.text)
-        #pprint(json.loads(res.text))
+        pprint(json.loads(res.text))
         changes = json.loads(res.text).get('LightGingerTheTextResult')
         curr_string = ""
 
@@ -43,15 +43,10 @@ def translate(bot: Bot, update: Update):
                 prev_end = end
 
         curr_string += msg.text[prev_end:]
-        # print(curr_string)
+        print(curr_string)
         update.effective_message.reply_text(curr_string)
 
 
-__help__ = """
- • Replying `/t` to a message will produce the grammar corrected version of it.
-"""
-
-__mod_name__ = "Grammar Correction"
 
 
 TRANSLATE_HANDLER = CommandHandler('t', translate)

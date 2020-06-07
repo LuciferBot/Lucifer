@@ -1,17 +1,17 @@
+
 from io import BytesIO
 from time import sleep
 
 from telegram import Bot, Update, TelegramError
 from telegram.error import BadRequest
 from telegram.ext import CommandHandler, MessageHandler, Filters, run_async
-from lucifer.modules.sql.users_sql import get_all_users
+
 import lucifer.modules.sql.users_sql as sql
 
 from lucifer import dispatcher, OWNER_ID, LOGGER, DEV_USERS
 from lucifer.modules.helper_funcs.chat_status import sudo_plus, dev_plus
 
 USERS_GROUP = 4
-CHAT_GROUP = 5
 DEV_AND_MORE = DEV_USERS.append(int(OWNER_ID))
 
 
@@ -55,9 +55,7 @@ def broadcast(bot: Bot, update: Update):
 
     if len(to_send) >= 2:
         chats = sql.get_all_chats() or []
-        users = get_all_users()
         failed = 0
-        failed_user = 0
         for chat in chats:
             try:
                 bot.sendMessage(int(chat.chat_id), to_send[1])
@@ -65,17 +63,9 @@ def broadcast(bot: Bot, update: Update):
             except TelegramError:
                 failed += 1
                 LOGGER.warning("Couldn't send broadcast to %s, group name %s", str(chat.chat_id), str(chat.chat_name))
-        for user in users:
-            try:
-                bot.sendMessage(int(user.user_id), to_send[1])
-                sleep(0.1)
-            except TelegramError:
-                failed_user += 1
-                LOGGER.warning("Couldn't send broadcast to %s", str(user.user_id))
 
         update.effective_message.reply_text(
-            f"Broadcast complete. {failed} groups failed to receive the message, probably due to being kicked. {failed_user} failed to receive message, probably due to being blocked"
-            )
+            f"Broadcast complete. {failed} groups failed to receive the message, probably due to being kicked.")
 
 
 @run_async
@@ -98,41 +88,30 @@ def log_user(bot: Bot, update: Update):
         sql.update_user(msg.forward_from.id,
                         msg.forward_from.username)
 
-
+@dev_plus
 @run_async
-@sudo_plus
 def chats(bot: Bot, update: Update):
     all_chats = sql.get_all_chats() or []
-    chatfile = 'List of chats.\n0. Chat name | Chat ID | Members count\n'
+    chatfile = 'List of chats.\n0. Chat name | Chat ID | Members count | Invitelink\n'
     P = 1
     for chat in all_chats:
         try:
             curr_chat = bot.getChat(chat.chat_id)
             bot_member = curr_chat.get_member(bot.id)
             chat_members = curr_chat.get_members_count(bot.id)
-            chatfile += "{}. {} | {} | {}\n".format(
-                P, chat.chat_name, chat.chat_id, chat_members)
+            if bot_member.can_invite_users:
+                invitelink = bot.exportChatInviteLink(chat.chat_id)
+            else:
+                invitelink = "0"
+            chatfile += "{}. {} | {} | {} | {}\n".format(P, chat.chat_name, chat.chat_id, chat_members, invitelink)
             P = P + 1
         except:
             pass
 
     with BytesIO(str.encode(chatfile)) as output:
         output.name = "chatlist.txt"
-        update.effective_message.reply_document(
-            document=output,
-            filename="chatlist.txt",
-            caption="Here is the list of chats in my database.")
-
-@run_async
-def chat_checker(bot: Bot, update: Update):
-  if update.effective_message.chat.get_member(bot.id).can_send_messages == False:
-    bot.leaveChat(update.effective_message.chat.id)
-
-def __user_info__(user_id):
-    if user_id == dispatcher.bot.id:
-        return """I've seen them in... Wow. Are they stalking me? They're in all the same places I am... oh. It's me."""
-    num_chats = sql.get_user_num_chats(user_id)
-    return f"""I've seen them in <code>{num_chats}</code> chats in total."""
+        update.effective_message.reply_document(document=output, filename="chatlist.txt",
+                                                caption="Here is the list of chats in my database.")
 
 def __stats__():
     return f"{sql.num_users()} users, across {sql.num_chats()} chats"
@@ -146,13 +125,11 @@ __help__ = ""  # no help string
 
 BROADCAST_HANDLER = CommandHandler("broadcast", broadcast)
 USER_HANDLER = MessageHandler(Filters.all & Filters.group, log_user)
-CHAT_CHECKER_HANDLER = MessageHandler(Filters.all & Filters.group, chat_checker)
 CHATLIST_HANDLER = CommandHandler("chatlist", chats)
 
 dispatcher.add_handler(USER_HANDLER, USERS_GROUP)
 dispatcher.add_handler(BROADCAST_HANDLER)
 dispatcher.add_handler(CHATLIST_HANDLER)
-dispatcher.add_handler(CHAT_CHECKER_HANDLER, CHAT_GROUP)
 
 __mod_name__ = "Users"
 __handlers__ = [(USER_HANDLER, USERS_GROUP), BROADCAST_HANDLER, CHATLIST_HANDLER]

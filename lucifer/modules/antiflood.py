@@ -1,16 +1,13 @@
 import html
-import re
 from typing import Optional, List
 
-from telegram import Message, Chat, Update, Bot, User, \
-InlineKeyboardButton, InlineKeyboardMarkup, ParseMode
+from telegram import Message, Chat, Update, Bot, User, ParseMode, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.error import BadRequest
-from telegram.ext import Filters, MessageHandler, CommandHandler, CallbackQueryHandler, run_async
+from telegram.ext import Filters, MessageHandler, CommandHandler, run_async
 from telegram.utils.helpers import mention_html
 
-from lucifer import dispatcher, WHITELIST_USERS, TIGER_USERS
-from lucifer.modules.helper_funcs.chat_status import is_user_admin, user_admin, can_restrict, \
-bot_admin, user_admin_no_reply, connection_status
+from lucifer import dispatcher
+from lucifer.modules.helper_funcs.chat_status import is_user_admin, user_admin, can_restrict, can_delete
 from lucifer.modules.log_channel import loggable
 from lucifer.modules.sql import antiflood_sql as sql
 
@@ -20,83 +17,46 @@ FLOOD_GROUP = 3
 @run_async
 @loggable
 def check_flood(bot: Bot, update: Update) -> str:
-    user = update.effective_user
-    chat = update.effective_chat
-    msg = update.effective_message
-    log_message = ""
+    user = update.effective_user  # type: Optional[User]
+    chat = update.effective_chat  # type: Optional[Chat]
+    msg = update.effective_message  # type: Optional[Message]
 
     if not user:  # ignore channels
-        return log_message
-
-    # ignore admins and whitelists
-    if (is_user_admin(chat, user.id) 
-            or user.id in WHITELIST_USERS
-            or user.id in TIGER_USERS):
-        sql.update_flood(chat.id, None)
-        return log_message
-
-    should_mute = sql.update_flood(chat.id, user.id)
-    if not should_mute:
         return ""
 
-    try:
-        bot.restrict_chat_member(
-            chat.id,
-            user.id,
-            can_send_messages=False
-        )
-        
-        keyboard = InlineKeyboardMarkup(
-            [[InlineKeyboardButton("Unmute", callback_data="unmute_flooder({})".format(user.id))]]
-        )
-        bot.send_message(chat.id,
-            f"{mention_html(user.id, user.first_name)} has been muted for flooding the group!",
-            reply_markup=keyboard,
-            parse_mode="HTML"
-        )
-            
+    # ignore admins
+    if is_user_admin(chat, user.id):
+        sql.update_flood(chat.id, None)
+        return ""
 
+    should_ban = sql.update_flood(chat.id, user.id)
+    if not should_ban:
+        return ""
+    
+    soft_flood = sql.get_flood_strength(chat.id)
+    if soft_flood:  # kick
+        chat.unban_member(user.id)
+        reply = "Wonderful, I don't like your flooding. Get out! {} has been kicked!".format(mention_html(user.id, user.first_name))
+
+    else:  # ban
+        chat.kick_member(user.id)
+        reply = "Frankly, I like to leave the flooding to natural disasters. {} has been banned!".format(mention_html(user.id, user.first_name))
+    try:
+        keyboard = []
+        msg.reply_text(reply, reply_markup=keyboard, parse_mode=ParseMode.HTML)
+        msg.delete()
         return "<b>{}:</b>" \
-               "\n#MUTED" \
-               "\n<b>User:</b> {}" \
-               "\nFlooded the group.\nMuted until an admin unmutes".format(html.escape(chat.title),
+               "\n#FLOOD_CTL" \
+               "\n<b>• User:</b> {}" \
+               "\nFlooded the group.".format(html.escape(chat.title),
                                              mention_html(user.id, user.first_name))
 
     except BadRequest:
-        msg.reply_text("I can't mute people here, give me permissions first! Until then, I'll disable antiflood.")
+        msg.reply_text("I can't kick people here, give me permissions first! Until then, I'll disable anti-flood.")
         sql.set_flood(chat.id, 0)
-        log_message = ("<b>{chat.title}:</b>\n"
-                       "#INFO\n"
-                       "Don't have kick permissions, so automatically disabled antiflood.")
-
-        return log_message
-
-
-@run_async
-@user_admin_no_reply
-@bot_admin
-def flood_button(bot: Bot, update: Update):
-    query = update.callback_query
-    user = update.effective_user
-    match = re.match(r"unmute_flooder\((.+?)\)", query.data)
-    if match:
-        user_id = match.group(1)
-        chat = update.effective_chat.id
-        try:
-            bot.restrict_chat_member(
-                chat,
-                int(user_id),
-                can_send_messages=True,
-                can_send_media_messages=True,
-                can_send_other_messages=True,
-                can_add_web_page_previews=True
-            )
-            update.effective_message.edit_text(
-                f"Unmuted by {mention_html(user.id, user.first_name)}.",
-                parse_mode="HTML"
-            )
-        except:
-            pass
+        return "<b>{}:</b>" \
+               "\n#INFO" \
+               "\nDon't have kick permissions, so automatically disabled anti-flood.".format(chat.title)
 
 
 @run_async
@@ -104,80 +64,106 @@ def flood_button(bot: Bot, update: Update):
 @can_restrict
 @loggable
 def set_flood(bot: Bot, update: Update, args: List[str]) -> str:
-    chat = update.effective_chat
-    user = update.effective_user
-    message = update.effective_message
-    log_message = ""
-
-    update_chat_title = chat.title
-    message_chat_title = update.effective_message.chat.title
-
-    if update_chat_title == message_chat_title:
-        chat_name = ""
-    else:
-        chat_name = f" in <b>{update_chat_title}</b>"
+    chat = update.effective_chat  # type: Optional[Chat]
+    user = update.effective_user  # type: Optional[User]
+    message = update.effective_message  # type: Optional[Message]
 
     if len(args) >= 1:
-
         val = args[0].lower()
-
         if val == "off" or val == "no" or val == "0":
             sql.set_flood(chat.id, 0)
-            message.reply_text("Antiflood has been disabled{}.".format(chat_name), parse_mode=ParseMode.HTML)
+            message.reply_text("Anti-flood has been disabled.")
 
         elif val.isdigit():
             amount = int(val)
             if amount <= 0:
                 sql.set_flood(chat.id, 0)
-                message.reply_text("Antiflood has been disabled{}.".format(chat_name), parse_mode=ParseMode.HTML)
-                log_message = (f"<b>{html.escape(chat.title)}:</b>\n"
-                               f"#SETFLOOD\n"
-                               f"<b>Admin</b>: {mention_html(user.id, user.first_name)}\n"
-                               f"Disabled antiflood.")
+                message.reply_text("Anti-flood has been disabled.")
+                return "<b>{}:</b>" \
+                       "\n#SETFLOOD" \
+                       "\n<b>• Admin:</b> {}" \
+                       "\nDisabled Anti-flood.".format(html.escape(chat.title), mention_html(user.id, user.first_name))
 
-                return log_message
-            elif amount < 3:
-                message.reply_text("Antiflood has to be either 0 (disabled), or a number bigger than 3!")
-                return log_message
+            elif amount < 1:
+                message.reply_text("Anti-flood has to be either 0 (disabled) or least 1")
+                return ""
 
             else:
                 sql.set_flood(chat.id, amount)
-                message.reply_text("Antiflood has been updated and set to {}{}".format(amount, chat_name),
-                                   parse_mode=ParseMode.HTML)
-                log_message = (f"<b>{html.escape(chat.title)}:</b>\n"
-                               f"#SETFLOOD\n"
-                               f"<b>Admin</b>: {mention_html(user.id, user.first_name)}\n"
-                               f"Set antiflood to <code>{amount}</code>.")
+                message.reply_text("Anti-flood has been updated and set to {}".format(amount))
+                return "<b>{}:</b>" \
+                       "\n#SETFLOOD" \
+                       "\n<b>• Admin:</b> {}" \
+                       "\nSet anti-flood to <code>{}</code>.".format(html.escape(chat.title),
+                                                                    mention_html(user.id, user.first_name), amount)
 
-                return log_message
         else:
             message.reply_text("Unrecognised argument - please use a number, 'off', or 'no'.")
-
-    return log_message
+    else:
+        message.reply_text("Give me an argument! Set a number to enforce against consecutive spams.\n" \
+                           "i.e `/setflood 5`: to control consecutive of messages.", parse_mode=ParseMode.MARKDOWN)
+    return ""
 
 
 @run_async
-@connection_status
 def flood(bot: Bot, update: Update):
-    chat = update.effective_chat
-    update_chat_title = chat.title
-    message_chat_title = update.effective_message.chat.title
-
-    if update_chat_title == message_chat_title:
-        chat_name = ""
-    else:
-        chat_name = f" in <b>{update_chat_title}</b>"
-
+    chat = update.effective_chat  # type: Optional[Chat]
+    msg = update.effective_message # type: Optional[Message]
     limit = sql.get_flood_limit(chat.id)
-
     if limit == 0:
-        update.effective_message.reply_text(f"I'm not currently enforcing flood control{chat_name}!",
-                                            parse_mode=ParseMode.HTML)
+        update.effective_message.reply_text("I'm not currently enforcing flood control!")
     else:
-        update.effective_message.reply_text(f"I'm currently muting users if they send "
-                                            f"more than {limit} consecutive messages{chat_name}.",
-                                            parse_mode=ParseMode.HTML)
+        soft_flood = sql.get_flood_strength(chat.id)
+        if soft_flood:
+            msg.reply_text("I'm currently kicking users out if they send more than {} " 
+                           "consecutive messages. They will able to join again!".format(limit, parse_mode=ParseMode.MARKDOWN))
+        else:
+            msg.reply_text("I'm currently banning users if they send more than {} " 
+                           "consecutive messages.".format(limit, parse_mode=ParseMode.MARKDOWN))
 
+@run_async
+@user_admin
+@loggable
+def set_flood_strength(bot: Bot, update: Update, args: List[str]):
+    chat = update.effective_chat  # type: Optional[Chat]
+    user = update.effective_user  # type: Optional[User]
+    msg = update.effective_message  # type: Optional[Message]
+
+    if args:
+        if args[0].lower() in ("on", "yes"):
+            sql.set_flood_strength(chat.id, False)
+            msg.reply_text("Exceeding consecutive flood limit will result in a ban!")
+            return "<b>{}:</b>\n" \
+                   "<b>• Admin:</b> {}\n" \
+                   "Has enabled strong flood and users will be banned.".format(html.escape(chat.title),
+                                                                            mention_html(user.id, user.first_name))
+
+        elif args[0].lower() in ("off", "no"):
+            sql.set_flood_strength(chat.id, True)
+            msg.reply_text("Exceeding consecutive flood limit will result in a kick, Users will able to join back.")
+            return "<b>{}:</b>\n" \
+                   "<b>• Admin:</b> {}\n" \
+                   "Has disabled strong flood and users will only be kicked.".format(html.escape(chat.title),
+                                                                                  mention_html(user.id,
+                                                                                               user.first_name))
+
+        else:
+            msg.reply_text("I only understand on/yes/no/off!")
+    else:
+        soft_flood = sql.get_flood_strength(chat.id)
+        if soft_flood == True:
+            msg.reply_text("Flood strength is currently set to *kick* users when they exceed the limits. ",
+                           parse_mode=ParseMode.MARKDOWN)
+                 
+        elif soft_flood:
+            msg.reply_text("The default configuration for flood control is currently set as a ban.",
+                           parse_mode=ParseMode.MARKDOWN)
+        
+        elif soft_flood == False:
+            msg.reply_text("Flood strength is currently set to *ban* users when they exceed the limits, "
+                           "user will be banned.",
+                           parse_mode=ParseMode.MARKDOWN)
+    return ""
 
 def __migrate__(old_chat_id, new_chat_id):
     sql.migrate_chat(old_chat_id, new_chat_id)
@@ -185,31 +171,32 @@ def __migrate__(old_chat_id, new_chat_id):
 
 def __chat_settings__(chat_id, user_id):
     limit = sql.get_flood_limit(chat_id)
+    soft_flood = sql.get_flood_strength(chat_id)
     if limit == 0:
         return "*Not* currently enforcing flood control."
     else:
-        return "Antiflood is set to `{}` messages.".format(limit)
-
-
+        if soft_flood:
+            return "Anti-flood is set to `{}` messages and *KICK* if exceeded.".format(limit)
+        else:
+            return "Anti-flood is set to `{}` messages and *BAN* if exceeded.".format(limit)
 __help__ = """
- • `/flood`*:* Get the current flood control setting
-
-*Admins only:*
- • `/setflood <int/'no'/'off'>`*:* enables or disables flood control
- *Example:* `/setflood 10`
- This will mute users if they send more than 10 messages in a row, bots are ignored.
+You know how sometimes, people join, send 100 messages, and ruin your chat? With antiflood, that happens no more!
+Antiflood allows you to take action on users that send more than x messages in a row. Exceeding the set flood \
+will result in banning or kicking the user.
+ - /flood: Get the current flood control setting
+*Admin only:*
+ - /setflood <int/'no'/'off'>: enables or disables flood control
+ - /strongflood <on/yes/off/no>: If set to on, exceeding the flood limit will result in a ban. Else, will just kick.
 """
 
+__mod_name__ = "Antiflood"
+
 FLOOD_BAN_HANDLER = MessageHandler(Filters.all & ~Filters.status_update & Filters.group, check_flood)
-FLOOD_QUERY_HANDLER = CallbackQueryHandler(flood_button, pattern=r"unmute_flooder")
 SET_FLOOD_HANDLER = CommandHandler("setflood", set_flood, pass_args=True, filters=Filters.group)
 FLOOD_HANDLER = CommandHandler("flood", flood, filters=Filters.group)
+FLOOD_STRENGTH_HANDLER = CommandHandler("strongflood", set_flood_strength, pass_args=True, filters=Filters.group)
 
 dispatcher.add_handler(FLOOD_BAN_HANDLER, FLOOD_GROUP)
-dispatcher.add_handler(FLOOD_QUERY_HANDLER)
 dispatcher.add_handler(SET_FLOOD_HANDLER)
 dispatcher.add_handler(FLOOD_HANDLER)
-
-__mod_name__ = "AntiFlood"
-__handlers__ = [(FLOOD_BAN_HANDLER, FLOOD_GROUP), SET_FLOOD_HANDLER, FLOOD_HANDLER]
-dispatcher.add_handler(FLOOD_HANDLER)
+dispatcher.add_handler(FLOOD_STRENGTH_HANDLER)

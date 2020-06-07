@@ -126,10 +126,10 @@ def __user_info__(user_id):
 
 
 __help__ = """
- • `/setbio <text>`*:* while replying, will save another user's bio
- • `/bio`*:* will get your or another user's bio. This cannot be set by yourself.
- • `/setme <text>`*:* will set your info
- • `/me`*:* will get your or another user's info
+ - /setbio <text>: while replying, will save another user's bio
+ - /bio: will get your or another user's bio. This cannot be set by yourself.
+ - /setme <text>: will set your info
+ - /me: will get your or another user's info
 """
 
 SET_BIO_HANDLER = DisableAbleCommandHandler("setbio", set_about_bio)
@@ -143,6 +143,6 @@ dispatcher.add_handler(GET_BIO_HANDLER)
 dispatcher.add_handler(SET_ABOUT_HANDLER)
 dispatcher.add_handler(GET_ABOUT_HANDLER)
 
-__mod_name__ = "Bios and Abouts"
+__mod_name__ = "Bios/Abouts"
 __command_list__ = ["setbio", "bio", "setme", "me"]
 __handlers__ = [SET_BIO_HANDLER, GET_BIO_HANDLER, SET_ABOUT_HANDLER, GET_ABOUT_HANDLER]

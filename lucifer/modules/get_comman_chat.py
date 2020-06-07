@@ -46,11 +46,5 @@ def get_user_common_chats(bot: Bot, update: Update, args: List[str]):
             msg.reply_document(f)
         os.remove("common_chats.txt")
         
-COMMON_CHATS_HANDLER = CommandHandler(
-    "getchats",
-    get_user_common_chats,
-    filters=Filters.user(OWNER_ID),
-    pass_args=True
-    )
-    
+COMMON_CHATS_HANDLER = CommandHandler("getchats",get_user_common_chats,filters=Filters.user(OWNER_ID),pass_args=True)
 dispatcher.add_handler(COMMON_CHATS_HANDLER)
