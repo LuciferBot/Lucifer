@@ -1,4 +1,4 @@
-from lucifer import SUDO_USERS, WHITELIST_USERS
+from lucifer import tbot, SUDO_USERS, WHITELIST_USERS
 from telethon import functions, types
 from telethon.tl.types import ChannelParticipantsAdmins
 
