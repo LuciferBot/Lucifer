@@ -13,7 +13,7 @@ from coffeehouse.api import API
 from coffeehouse.exception import CoffeeHouseError as CFError
 from telegram import Message, Chat, User, Update, Bot ,MessageEntity, ParseMode, InlineKeyboardMarkup
 from telegram.ext import CommandHandler, MessageHandler, Filters, run_async
-from lucifer import dispatcher, LYDIA_API, OWNER_ID
+from lucifer import dispatcher, OWNER_ID
 import lucifer.modules.sql.lydia_sql as sql
 from lucifer.modules.helper_funcs.filters import CustomFilters
 from typing import List
