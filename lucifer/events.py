@@ -1,5 +1,4 @@
 from telethon import events
-from lucifer import tbot
 
 
 def register(**args):
