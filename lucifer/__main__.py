@@ -14,7 +14,7 @@ from telegram.ext import CommandHandler, Filters, MessageHandler, CallbackQueryH
 from telegram.ext.dispatcher import run_async, DispatcherHandlerStop, Dispatcher
 from telegram.utils.helpers import escape_markdown
 from lucifer import dispatcher, updater, TOKEN, WEBHOOK, SUDO_USERS, OWNER_ID, CERT_PATH, PORT, URL, LOGGER, \
-    ALLOW_EXCL, TOKEN
+    ALLOW_EXCL, TOKEN, tbot
 from lucifer.modules import ALL_MODULES
 from lucifer.modules.helper_funcs.chat_status import is_user_admin
 from lucifer.modules.helper_funcs.misc import paginate_modules
@@ -246,7 +246,7 @@ def get_help(bot: Bot, update: Update):
         update.effective_message.reply_text("Contact me in PM to get the list of possible commands.",
                                             reply_markup=InlineKeyboardMarkup(
                                                 [[InlineKeyboardButton(text="Help",url="t.me/{}?start=help".format(bot.username)),
-                                                InlineKeyboardButton(text="👥 Support chat.",url="https://telegram.dog/allukatm")]]))
+                                                InlineKeyboardButton(text="👥 Support chat.",url="https://telegram.dog/LuciferProBotSupport")]]))
         return
 
     elif len(args) >= 2 and any(args[1].lower() == x for x in HELPABLE):
@@ -477,6 +477,19 @@ def main():
     dispatcher.add_handler(source_handler)
     dispatcher.add_handler(M_CONNECT_BTN_HANDLER)
     
+
+
+    
+    
+
+
+    
+
+
+    
+
+    
+
     # dispatcher.add_error_handler(error_callback)
 
     # add antiflood processor
@@ -495,7 +508,7 @@ def main():
             updater.bot.set_webhook(url=URL + TOKEN)
 
     else:
-        LOGGER.info("spongebob running...")
+        LOGGER.info("lucifer running...")
         updater.start_polling(timeout=15, read_latency=4)
 
   
@@ -564,4 +577,6 @@ def process_update(self, update):
 
 if __name__ == '__main__':
     LOGGER.info("Successfully loaded modules: " + str(ALL_MODULES))
+    tbot.start(bot_token=TOKEN)
     main()
+    LOGGER.info("Successfully loaded")
