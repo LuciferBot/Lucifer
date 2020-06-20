@@ -47,7 +47,6 @@ UNGBAN_ERRORS = {
 
 
 @run_async
-@support_plus
 def gban(bot: Bot, update: Update, args: List[str]):
     message = update.effective_message
     user = update.effective_user
@@ -188,7 +187,6 @@ def gban(bot: Bot, update: Update, args: List[str]):
 
 
 @run_async
-@support_plus
 def ungban(bot: Bot, update: Update, args: List[str]):
     message = update.effective_message
     user = update.effective_user
@@ -312,8 +310,6 @@ def check_and_ban(update, user_id, should_message=True):
             
             
 @run_async
-@sudo_plus
-@dev_plus
 def ungban_quicc(bot: Bot, update: Update, args: List[str]):
     message = update.effective_message
     try:
@@ -398,7 +394,6 @@ def antispam(bot: Bot, update: Update, args: List[str]):
         
         
 @run_async
-@dev_plus
 def clear_gbans(bot: Bot, update: Update):
     banned = sql.get_gban_list()
     deleted = 0
