@@ -9,7 +9,7 @@ from telegram.ext import CommandHandler, CallbackQueryHandler, Filters, run_asyn
 from telegram.utils.helpers import mention_html
 
 import lucifer.modules.sql.connection_sql as sql
-from lucifer import dispatcher, SUDO_USERS, DEV_USERS, spamfilters
+from lucifer import dispatcher, SUDO_USERS, DEV_USERS
 from lucifer.modules.helper_funcs import chat_status
 from lucifer.modules.helper_funcs.extraction import extract_user, extract_user_and_text
 from lucifer.modules.helper_funcs.string_handling import extract_time
